@@ -1,0 +1,4 @@
+# Configuração da Netlify: publica a pasta "site" a cada mudança na branch main.
+[build]
+  publish = "site"
+  command = "echo 'Site estático: nada para compilar.'"
