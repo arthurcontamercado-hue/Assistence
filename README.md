@@ -17,6 +17,6 @@ A configuração fica em `netlify.toml`: a pasta publicada é `site/`.
 
 ## Gerar o site de novo a partir da fonte
 ```
-python3 fonte/make.py fonte/assistence-site.html site "https://ENDERECO-DO-SITE" / site/img <caminho>/assistence-demonstracao.html
+python3 fonte/make.py fonte/assistence-site.html site "https://ENDERECO-DO-SITE" / <pasta-com-as-imagens> <caminho>/assistence-demonstracao.html
 ```
 Com o endereço final, o script também gera `sitemap.xml` e os links canônicos para o Google.
