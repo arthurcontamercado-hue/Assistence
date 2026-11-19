@@ -8,7 +8,7 @@ def grab(pat,flags=re.S):
     m=re.search(pat,src,flags); assert m,pat; return m
 style=grab(r"<style>(.*?)</style>").group(1)
 font=grab(r'<link rel="stylesheet" href="https://fonts[^>]+>').group(0)
-header=grab(r'<div id="progress".*?</header>').group(0)
+header=grab(r'<header class="top">.*?</header>').group(0)
 footer=grab(r'<footer>.*?</footer>').group(0)
 shell=grab(r'<nav class="tabbar".*?</div>\s*<div class="sheet"[^>]*></div>').group(0)
 js=grab(r"<script>(.*?)</script>").group(1)
@@ -34,7 +34,7 @@ js=js.replace('const href=k=>"#"+k;','const FN={inicio:"index",produto:"recursos
 js=js.replace('<a href="${href("area")}" data-private>${I(ICO.lock,20)}Área privada</a>','')
 n=len(js); js=re.sub(r"function route\(\)\{.*?window\.addEventListener\(\"hashchange\",route\);",
  'function route(){document.querySelectorAll("[data-v]").forEach(a=>a.classList.toggle("on",a.dataset.v===window.PAGE));if(window.PAGE==="demonstracao"){document.body.classList.add("demo-mode");loadDemo()}}',js,flags=re.S); assert len(js)<n
-n=len(js); js=re.sub(r"/\* ---------- área privada ---------- \*/.*?(?=/\* =+ SONS =+ \*/)","",js,flags=re.S); assert len(js)<n
+n=len(js); js=re.sub(r"/\* ---------- área privada ---------- \*/.*?(?=route\(\);\n\}\)\(\);)","",js,flags=re.S); assert len(js)<n
 js=js.replace('href="#acessar"','href="acessar.html"').replace('CFG.demo||"#acessar"','CFG.demo||"acessar.html"')
 assert "startArea" not in js and "Área privada" not in js
 fav="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 24'><path fill='#2f5bea' d='M13 1 1 23h6.2L13 12.4 18.8 23H25z'/></svg>"
