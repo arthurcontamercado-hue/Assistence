@@ -13,10 +13,11 @@ A configuração fica em `netlify.toml`: a pasta publicada é `site/`.
   - `img/`: telas reais do app no computador e no celular.
   - `assets/config.js`: endereço do app real (campo `app`). É o único arquivo a mudar quando o app tiver endereço.
   - `_headers`: cabeçalhos de segurança e de cache lidos pela Netlify.
-- `fonte/`: a página única usada na prévia do Claude (`assistence-site.html`) e o script que gera o site (`make.py`). Não é publicada.
+- `demonstracao/`: a demonstração interativa, **independente do aplicativo real**: dados fictícios próprios (`dados.js`), telas e interações (`app.js`). Não usa o motor, o backend nem as integrações do app (repositório `assistence-mvp`). Veja `demonstracao/LEIA-ME.md`.
+- `fonte/`: a página única usada na prévia do Claude (`assistence-site.html`), as imagens do site (`img/`) e o script que gera o site (`make.py`). Não é publicada.
 
 ## Gerar o site de novo a partir da fonte
 ```
-python3 fonte/make.py fonte/assistence-site.html site "https://ENDERECO-DO-SITE" / site/img <caminho>/assistence-demonstracao.html
+python3 fonte/make.py fonte/assistence-site.html site "https://ENDERECO-DO-SITE" / fonte/img demonstracao
 ```
 Com o endereço final, o script também gera `sitemap.xml` e os links canônicos para o Google.

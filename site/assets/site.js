@@ -43,18 +43,18 @@ try{const t=localStorage.getItem("as-theme");if(t)document.documentElement.datas
 /* ---------- telas reais do app ---------- */
 const SHOT={
   inicio:["app-celular-inicio.webp","Tela inicial do Assistence no celular, com o resumo do dia e as prioridades"],
-  mensagens:["app-celular-mensagens.webp","Lista de mensagens do Assistence no celular"],
+  mensagens:["app-celular-mensagens.webp","Caixa unificada do Assistence no celular, com Gmail, Outlook e WhatsApp"],
   tarefas:["app-celular-tarefas.webp","Tarefas do Assistence no celular, agrupadas por prazo"],
   dpainel:["app-computador-painel.webp","Painel do Assistence no computador, com indicadores, prioridades e a semana"],
-  dmensagens:["app-computador-mensagens.webp","Mensagens do Assistence no computador, com a lista e a leitura lado a lado"],
+  dmensagens:["app-computador-mensagens.webp","Caixa unificada do Assistence no computador, com a lista, a conversa e as informações identificadas"],
   dtarefas:["app-computador-tarefas.webp","Quadro de tarefas do Assistence no computador, separado por prazo"]};
 const img=(k,eager)=>{const [f,alt]=SHOT[k];const d=k[0]==="d";return `<img src="img/${f}" width="${d?1920:750}" height="${d?1200:1676}" alt="${alt}"${eager?"":' loading="lazy"'} decoding="async">`};
 const phone=(k,eager)=>`<div class="phone"><div class="scr">${img(k,eager)}</div></div>`;
 const laptop=(k,eager)=>`<div class="laptop"><div class="screen"><div class="chrome"><i></i><i></i><i></i><span class="url">${I(ICO.lock,10)}app.assistence</span></div>${img(k,eager)}</div><div class="base"></div></div>`;
-const TOUR=[["painel","Painel","Seu dia e a sua semana",["Cinco indicadores: prioridades, ações, prazos de hoje, atrasadas e quanto pagar em 7 dias.","Tabela do que é mais importante agora, com prazo, valor e botão de concluir.","Resumo do dia e a semana dia a dia."]],
-  ["mensagens","Mensagens","Lista e leitura lado a lado",["Cada linha mostra ação, categoria, prazo e valor.","Ao lado, o resumo e as informações identificadas.","Passe de uma mensagem para outra com ↑ e ↓."]],
-  ["tarefas","Tarefas","O que fazer, por prazo",["Atrasadas, hoje, próximos 7 dias, depois e sem prazo.","Cada tarefa leva à conversa de origem.","Valores das contas a pagar sempre à vista."]]];
-const MTOUR=[["inicio","Início","Resumo do dia e prioridades"],["mensagens","Mensagens","Toda a caixa, organizada"],["tarefas","Tarefas","Agrupadas por prazo"]];
+const TOUR=[["painel","Painel","Seu dia e a sua semana",["Cinco indicadores: prioridade alta, ações pendentes, prazos de hoje, atrasadas e quanto pagar em 7 dias.","O que é mais importante agora, com prazo, valor e responsável.","Resumo do dia, a semana dia a dia e as conversas por canal."]],
+  ["mensagens","Caixa unificada","Três canais, uma caixa só",["Gmail, Outlook e WhatsApp na mesma lista, com filtro por canal.","Ao abrir, o resumo e as informações identificadas, com o motivo da classificação.","Responda com sugestões, atribua à equipe e corrija o que precisar."]],
+  ["tarefas","Tarefas","O que fazer, por prazo",["Atrasadas, hoje, próximos 7 dias, depois e sem prazo.","Um pedido feito em várias conversas vira uma tarefa só.","Veja só as suas ou as de toda a equipe."]]];
+const MTOUR=[["inicio","Início","Resumo do dia e prioridades"],["mensagens","Caixa","Gmail, Outlook e WhatsApp juntos"],["tarefas","Tarefas","Agrupadas por prazo"]];
 function tourDesk(){return `<div class="tour-tabs" role="tablist">${TOUR.map((t,i)=>`<button role="tab" data-tour="${i}" class="${i?"":"on"}" aria-selected="${!i}">${t[1]}</button>`).join("")}</div>
   <div class="tour"><div class="tour-cap" id="tour-cap"></div><div id="tour-shot"></div></div>`}
 function setTour(i){const t=TOUR[i];$("tour-cap").innerHTML=`<h3>${t[2]}</h3><ul>${t[3].map(x=>`<li>${tick}<span>${esc(x)}</span></li>`).join("")}</ul><div class="cta" style="margin-top:14px"><a class="btn sec" href="${CFG.demo||"acessar.html"}"${CFG.demo&&CFG.demo[0]!=="#"?' target="_blank" rel="noopener"':""}>Usar na demonstração</a></div>`;$("tour-shot").innerHTML=laptop("d"+t[0]);document.querySelectorAll("[data-tour]").forEach(b=>{const on=+b.dataset.tour===i;b.classList.toggle("on",on);b.setAttribute("aria-selected",String(on))})}
@@ -64,7 +64,7 @@ function plat(a){return a.map(([i,t,s])=>`<div class="card"><span class="ic">${I
 const mocks={
   pair:()=>`${laptop("dpainel",true)}${phone("inicio",true)}`,
   "tour-desk":tourDesk,"tour-mob":tourMob,
-  channels:()=>[["gm","Gmail"],["ol","Outlook"],["wa","WhatsApp"],["ig","Instagram"],["tg","Telegram"],["sl","Slack"],["tm","Teams"],["sms","SMS"]].map(([k,n])=>`<span class="chip"><span class="cdot ${CH[k][0]}">${CH[k][1]}</span>${n}</span>`).join(""),
+  channels:()=>[["gm","Gmail"],["ol","Outlook"],["wa","WhatsApp Business"]].map(([k,n])=>`<span class="chip"><span class="cdot ${CH[k][0]}">${CH[k][1]}</span>${n}</span>`).join(""),
   features:()=>[["star","Prioridade automática","Alta, média e baixa para cada mensagem, com o motivo e a confiança da análise."],["task","Tarefas a partir de mensagens","Pedidos e prazos viram tarefas com origem, responsável e prazo calculado."],["money","Contas a pagar","Boletos, guias e faturas somados por vencimento, cada conta contada uma vez."],["search","Busca inteligente","Encontre por nome, valor, prazo ou anexo, em toda a caixa."],["cal","Visão da semana","Os prazos de cada dia, da segunda ao domingo."],["sun","Resumo do dia","O que vence hoje, o mais urgente e quanto há em valores pendentes."],["tag","Categorias e regras","Clientes, fornecedores, financeiro e quantas categorias o seu negócio precisar."],["user","Contatos frequentes","Quem mais conversa com você, com as conversas que esperam resposta."],["reply","Respostas sugeridas","Modelos de resposta para as perguntas que se repetem."],["bolt","Aprendizado com correções","Cada ajuste seu melhora as próximas classificações."],["users","Caixas da equipe","Atribua conversas e acompanhe quem respondeu o quê."],["bell","Notificações inteligentes","Avisos só para o que é urgente. O resto espera o seu momento."]].map(([i,t,p])=>`<div><span class="ic">${I(ICO[i],20)}</span><h3>${t}</h3><p>${p}</p></div>`).join(""),
   security:()=>[["Somente leitura","O Assistence pede ao Google apenas a leitura do e-mail. Ele não envia, não apaga e não altera nenhuma mensagem."],["Login oficial do Google","OAuth 2.0 com PKCE e proteção contra login forjado. Sua senha nunca passa pelo Assistence."],["Criptografia","Autorizações e cópia das conversas cifradas com AES-256-GCM, separadas por usuário; conexões por HTTPS."],["Algoritmo próprio","As mensagens são analisadas pelo algoritmo do Assistence. Nenhum serviço de IA de terceiros recebe o seu conteúdo."],["Sessão protegida","Cookies seguros, que o código da página não consegue ler. Pedidos vindos de outros sites são recusados."],["Registros sem conteúdo","Os registros de erro nunca guardam e-mails, assuntos, textos, valores ou senhas."],["Exclusão de verdade","Excluir a conta apaga tudo e revoga o acesso no Google na hora."]].map(([b,s])=>`<li>${tick}<b>${b}</b><span>${s}</span></li>`).join(""),
   "plat-desk":()=>plat([["globe","Navegador","Chrome, Edge, Safari e Firefox"],["monitor","Mesa de trabalho","A partir de 1024 px de largura"],["bolt","Atalhos","/ busca, ↑ ↓ navegam, Esc fecha"]]),
@@ -76,7 +76,7 @@ document.querySelectorAll("[data-mock]").forEach(el=>{const [k,arg]=el.dataset.m
   else if(k==="laptop")el.innerHTML=laptop("d"+arg);
   else if(mocks[k])el.innerHTML=mocks[k]();
 });
-if($("tour-cap")){setTour(0);document.querySelectorAll("[data-tour]").forEach(b=>b.onclick=()=>setTour(+b.dataset.tour))}
+if($("tour-cap")){setTour(0);document.querySelectorAll("[data-tour]").forEach(b=>b.onclick=()=>{setTour(+b.dataset.tour);["tour-shot","tour-cap"].forEach(id=>{const el=$(id);el.classList.remove("swap");void el.offsetWidth;el.classList.add("swap")})})}
 document.querySelectorAll(".carousel").forEach(c=>{const dots=c.nextElementSibling.children;c.addEventListener("scroll",()=>{const w=c.firstElementChild.getBoundingClientRect().width+16;const i=Math.min(dots.length-1,Math.round(c.scrollLeft/w));[...dots].forEach((d,j)=>d.classList.toggle("on",j===i))},{passive:true})});
 
 /* ---------- demonstração dentro do site ---------- */
@@ -87,9 +87,10 @@ async function loadDemo(force){
   if(fr.dataset.ready&&!force)return;
   demoBusy=true;demoMsg('<div class="spin"></div><b>Abrindo a demonstração…</b>Carregando o aplicativo.');
   try{
-    if(!demoHtml){const r=await fetch(CFG.demoFile||"demonstracao/index.html");if(!r.ok)throw new Error(r.status);demoHtml=await r.text()}
-    fr.onload=()=>{demoMsg("");fr.dataset.ready="1"};
-    fr.srcdoc=demoHtml;
+    fr.classList.remove("ready");
+    fr.onload=()=>{demoMsg("");fr.dataset.ready="1";fr.classList.add("ready")};
+    if(CFG.demoSrc){fr.src=CFG.demoSrc+(force?"?r="+Date.now():"");}
+    else{if(!demoHtml){const r=await fetch(CFG.demoFile||"demonstracao/index.html");if(!r.ok)throw new Error(r.status);demoHtml=await r.text()}fr.srcdoc=demoHtml;}
   }catch(e){demoMsg('<b>Não foi possível abrir a demonstração.</b>Verifique a conexão e toque em Recomeçar.')}
   finally{demoBusy=false}
 }
@@ -100,13 +101,13 @@ document.querySelectorAll("[data-size]").forEach(b=>b.onclick=()=>{
 const TAB=CFG.self?CFG.self+"#app-demo":(CFG.tab||"");
 if($("demo-tab")){if(TAB)$("demo-tab").href=TAB;else $("demo-tab").hidden=true}
 if($("demo-full"))$("demo-full").onclick=async()=>{const w=$("frame-wrap");try{if(document.fullscreenElement)await document.exitFullscreen();else await w.requestFullscreen()}catch(e){if(TAB)window.open(TAB,"_blank","noopener")}};
-if($("demo-reset"))$("demo-reset").onclick=()=>{const fr=$("demo-frame");delete fr.dataset.ready;loadDemo(true)};
+if($("demo-reset"))$("demo-reset").onclick=()=>{try{Object.keys(sessionStorage).filter(k=>k.indexOf("assistence-demo:")===0).forEach(k=>sessionStorage.removeItem(k))}catch(e){}const fr=$("demo-frame");delete fr.dataset.ready;loadDemo(true)};
 
 /* ---------- perguntas frequentes ---------- */
 const FAQ=[
  ["Geral","O que é o Assistence?","Um aplicativo que reúne as suas mensagens, identifica o que é importante e transforma pedidos, prazos e cobranças em tarefas organizadas, no computador e no celular."],
  ["Geral","Como o Assistence funciona?","Você entra com o Google e autoriza a leitura do e-mail. O algoritmo próprio do Assistence analisa cada conversa, atribui categoria e prioridade e cria as tarefas. Novas mensagens são organizadas sozinhas."],
- ["Geral","Posso experimentar antes de conectar meu e-mail?","Sim. A demonstração é o aplicativo de verdade com uma caixa de entrada de exemplo. Ela recebe mensagens novas enquanto você usa e não conecta nenhuma conta."],
+ ["Geral","Posso experimentar antes de conectar meu e-mail?","Sim. A demonstração mostra o Assistence com conversas fictícias de Gmail, Outlook e WhatsApp de um estúdio de interiores. Você navega, responde, atribui e conclui tarefas, e pode simular a chegada de novas mensagens. Nenhuma conta é conectada e nada sai do seu navegador."],
  ["Geral","O Assistence substitui o Gmail?","Não. Ele trabalha junto com a sua conta: as mensagens continuam no Gmail, e o Assistence só lê para organizar."],
  ["Segurança","Meus dados estão seguros?","Sim. O acesso é feito pelo login oficial do Google, somente para leitura, com criptografia AES-256-GCM no armazenamento e HTTPS nas conexões, seguindo a LGPD."],
  ["Segurança","Vocês usam inteligência artificial de terceiros?","Não. A análise é feita pelo algoritmo próprio do Assistence. Suas mensagens não são enviadas a nenhum serviço de IA."],

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Assistence · Demonstração</title>
+<meta name="description" content="Demonstração interativa do Assistence com dados fictícios: Gmail, WhatsApp e Outlook reunidos em um só lugar.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#4f46e5">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 24'%3E%3Cpath fill='%234f46e5' d='M13 1 1 23h6.2L13 12.4 18.8 23H25z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<!-- Demonstração do Assistence: dados fictícios e resultados programados. Não usa o motor nem as integrações do aplicativo real. -->
+<div class="boot" id="boot" aria-live="polite">
+  <div class="boot-in">
+    <div class="boot-logo"><svg width="22" height="20" viewBox="0 0 26 24" fill="currentColor" aria-hidden="true"><path d="M13 1 1 23h6.2L13 12.4 18.8 23H25z"/></svg></div>
+    <b>Preparando a demonstração</b>
+    <ul class="boot-steps">
+      <li><i></i>Gmail · conexão demonstrativa</li>
+      <li><i></i>Outlook · conexão demonstrativa</li>
+      <li><i></i>WhatsApp · conexão demonstrativa</li>
+      <li><i></i>Organizando as conversas de exemplo</li>
+    </ul>
+    <div class="boot-bar"><i></i></div>
+  </div>
+</div>
+<div id="app"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<script src="dados.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

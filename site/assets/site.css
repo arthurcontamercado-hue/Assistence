@@ -320,7 +320,8 @@ footer{background:var(--ink);color:var(--on-ink-mu);padding-block:64px 32px;font
 .stage{background:var(--bg2);border-block:1px solid var(--bd);padding-block:24px 40px}
 .frame-wrap{margin:0 auto;width:100%;max-width:1440px;height:max(640px,calc(100vh - 230px));border:1px solid var(--bd2);border-radius:14px;overflow:hidden;background:var(--sf);box-shadow:var(--sh-lg);position:relative;transition:max-width .3s}
 .frame-wrap.as-phone{max-width:400px;height:min(844px,max(640px,calc(100vh - 230px)));border-radius:36px;border:9px solid var(--bezel)}
-.frame-wrap iframe{width:100%;height:100%;border:0;display:block;background:#fff}
+.frame-wrap iframe{width:100%;height:100%;border:0;display:block;background:#f4f6fb;opacity:0;transition:opacity .35s ease}
+.frame-wrap iframe.ready{opacity:1}
 .frame-msg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--mu);background:var(--sf)}
 .frame-msg[hidden]{display:none}
 .frame-msg b{display:block;color:var(--tx);font-size:17px;margin-bottom:6px}
@@ -448,4 +449,24 @@ body.app-mode .page:not([hidden]){animation:none}
 }
 @media (min-width:1024px){.tabbar,.sheet,.sheet-bg{display:none!important}}
 @media (max-width:1180px) and (min-width:1024px){.menu a{padding:8px 8px;font-size:14px}.nav{gap:16px}}
-@media (prefers-reduced-motion:no-preference){.page:not([hidden]){animation:in .35s ease both}@keyframes in{from{opacity:.5;transform:translateY(8px)}to{opacity:1;transform:none}}}
+/* transições discretas: só suavizam o que já acontece, sem efeitos chamativos */
+.card,.topic,.plat .card{transition:border-color .2s ease,box-shadow .2s ease}
+.btn{transition:background .15s,transform .12s ease,border-color .15s}
+.menu a{transition:color .15s,background .15s}
+.tour-tabs button,.seg button{transition:background .2s,color .2s,box-shadow .2s}
+.frame-wrap{transition:max-width .35s cubic-bezier(.2,.75,.25,1),height .35s cubic-bezier(.2,.75,.25,1),border-radius .35s}
+@media (hover:hover){.card:hover,.topic:hover{border-color:var(--bd2);box-shadow:var(--sh)}}
+@media (prefers-reduced-motion:no-preference){
+  .page:not([hidden]){animation:in .3s cubic-bezier(.2,.75,.25,1) both}
+  @keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .btn:active{transform:scale(.98)}
+  .faq details[open] p{animation:fa .25s ease both}
+  @keyframes fa{from{opacity:0;transform:translateY(-4px)}}
+  .sheet:not([hidden]){animation:sh .3s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes sh{from{transform:translateY(100%)}}
+  .sheet-bg:not([hidden]){animation:sbg .25s ease both}
+  @keyframes sbg{from{opacity:0}}
+  #tour-shot.swap,#tour-cap.swap{animation:sw .3s ease both}
+  @keyframes sw{from{opacity:0;transform:translateY(4px)}}
+  .carousel{scroll-behavior:smooth}
+}

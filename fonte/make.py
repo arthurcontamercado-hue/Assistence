@@ -1,9 +1,9 @@
 """Gera o site estático (várias páginas) a partir da página única usada na prévia.
-uso: python3 make.py <fonte.html> <pasta-saida> <endereco-do-site> <caminho-base> <pasta-img> <demo.html>"""
+uso: python3 make.py <fonte.html> <pasta-saida> <endereco-do-site> <caminho-base> <pasta-img> <pasta-demonstracao>"""
 import re, os, shutil, sys
 src=open(sys.argv[1],encoding="utf8").read()
 out,DOM,BASE,IMG,DEMO=sys.argv[2],sys.argv[3].rstrip("/"),sys.argv[4],sys.argv[5],sys.argv[6]
-shutil.rmtree(out,ignore_errors=True); os.makedirs(out+"/assets"); os.makedirs(out+"/demonstracao")
+shutil.rmtree(out,ignore_errors=True); os.makedirs(out+"/assets")
 def grab(pat,flags=re.S):
     m=re.search(pat,src,flags); assert m,pat; return m
 style=grab(r"<style>(.*?)</style>").group(1)
@@ -22,7 +22,7 @@ PAGES={"inicio":("index","Assistence | Organização inteligente de mensagens","
 "acessar":("acessar","Entrar | Assistence","Entre no Assistence com a sua conta Google ou experimente a demonstração."),
 "privacidade":("privacidade","Política de Privacidade | Assistence","Como o Assistence trata os seus dados pessoais e os dados das contas conectadas."),
 "termos":("termos","Termos de Uso | Assistence","As regras de uso do Assistence."),
-"demonstracao":("demonstracao","Demonstração | Assistence","Experimente o Assistence com uma caixa de entrada de exemplo, no modo computador ou celular, sem conectar nenhuma conta.")}
+"demonstracao":("demonstracao","Demonstração | Assistence","Experimente o Assistence com conversas fictícias de Gmail, Outlook e WhatsApp, no modo computador ou celular, sem conectar nenhuma conta.")}
 fn=lambda k: PAGES[k][0]+".html"
 def links(h):
     return re.sub(r'href="#([\w-]+)"',lambda m:f'href="{fn(m.group(1))}"' if m.group(1) in PAGES else m.group(0),h)
@@ -47,18 +47,19 @@ open(out+"/assets/config.js","w",encoding="utf8").write('''/* Ligações do site
          Exemplo: "https://assistence-mvp.SUA-CONTA.workers.dev/"  ou, com domínio próprio, "https://app.assistence.com.br/".
          Enquanto estiver vazio, os botões "Entrar" levam à página Entrar, que oferece a demonstração.
    demo: página do site que mostra a demonstração (modo computador ou celular).
-   demoFile e tab: o aplicativo de demonstração em si (aberto dentro da página e no botão "Abrir em nova aba"). */
+   demoSrc e tab: a demonstração em si (pasta demonstracao/, com dados fictícios próprios), aberta dentro da página
+         e no botão "Abrir em nova aba". Ela não usa o motor nem as integrações do aplicativo real. */
 window.ASSISTENCE={
   app:"",
   demo:"demonstracao.html",
-  demoFile:"demonstracao/index.html",
+  demoSrc:"demonstracao/",
   tab:"demonstracao/"
 };
 ''')
 for f in os.listdir(IMG): shutil.copy(os.path.join(IMG,f),out+"/img/"+f) if os.path.isdir(out+"/img") else (os.makedirs(out+"/img"),shutil.copy(os.path.join(IMG,f),out+"/img/"+f))
-d=open(DEMO,encoding="utf8").read()
-d=d.replace("<head>","<head>\n<meta name=\"robots\" content=\"noindex\">",1) if "<head>" in d else d
-open(out+"/demonstracao/index.html","w",encoding="utf8").write(d)
+# Demonstração: pasta própria (index.html, estilo.css, dados.js, app.js), copiada sem mudanças.
+assert os.path.isdir(DEMO), "DEMO deve ser a pasta demonstracao/ do repositório"
+shutil.copytree(DEMO,out+"/demonstracao",ignore=shutil.ignore_patterns("LEIA-ME.md","*.py"))
 def doc(k,body,extra=""):
     f,title,desc=PAGES[k]; url=DOM+("/" if f=="index" else "/"+f+".html")
     abs_=(f'\n<link rel="canonical" href="{url}">\n<meta property="og:url" content="{url}">\n<meta property="og:image" content="{DOM}/img/app-computador-painel.webp">' if DOM else "")
