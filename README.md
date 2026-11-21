@@ -8,8 +8,8 @@ A configuração fica em `netlify.toml`: a pasta publicada é `site/`.
 
 ## Pastas
 - `site/`: o site publicado.
-  - Páginas: `index.html`, `recursos.html`, `como-funciona.html`, `seguranca.html`, `plataformas.html`, `sobre.html`, `suporte.html`, `acessar.html`, `privacidade.html`, `termos.html`, `demonstracao.html`, `404.html`.
-  - `demonstracao/`: cópia publicada da demonstração (gerada a partir da pasta `demonstracao/` da raiz).
+  - Páginas: `index.html`, `recursos.html`, `como-funciona.html`, `seguranca.html`, `plataformas.html`, `sobre.html`, `suporte.html`, `acessar.html`, `privacidade.html`, `termos.html`, `404.html`.
+  - `demonstracao/`: a demonstração, página própria em /demonstracao/ (copiada da pasta `demonstracao/` da raiz).
   - `img/`: telas reais do app no computador e no celular.
   - `assets/config.js`: endereço do app real (campo `app`). É o único arquivo a mudar quando o app tiver endereço.
   - `_headers`: cabeçalhos de segurança e de cache lidos pela Netlify.
