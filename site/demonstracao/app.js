@@ -48,7 +48,7 @@ function prazoTxt(p, longo) {
 }
 const prazoCls = p => !p ? "" : p.d < 0 ? "hi" : p.d === 0 ? "me" : "";
 const brl = v => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const curto = v => v >= 1000 ? "R$ " + (v / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + " mil" : brl(v);
+const brlCurto = v => v >= 1000 ? "R$ " + (v / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + " mil" : brl(v);
 
 /* ---------------- ícones ---------------- */
 const P = {
@@ -65,12 +65,15 @@ const P = {
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', more: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
   arrow: '<path d="m9 18 6-6-6-6"/>', link: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>', reset: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
   mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>', chat: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>', send: '<path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/>',
-  layers: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>', warn: '<path d="M12 3 2 21h20z"/><path d="M12 10v5M12 18h.01"/>'
+  layers: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>', cam: '<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/>',
+  hash: '<path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/>', sms: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 2-2h14a2 2 0 0 1 2 2z"/>', warn: '<path d="M12 3 2 21h20z"/><path d="M12 10v5M12 18h.01"/>'
 };
 const I = (k, s = 16, w = 2) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[k] || ""}</svg>`;
 const LOGO = '<svg width="16" height="15" viewBox="0 0 26 24" fill="currentColor" aria-hidden="true"><path d="M13 1 1 23h6.2L13 12.4 18.8 23H25z"/></svg>';
-const CHI = { gmail: "mail", outlook: "mail", whatsapp: "chat" };
-const chIcon = (c, sm) => `<span class="ch ${c}${sm ? " sm" : ""}" title="${esc(canal(c).nome)} (demonstrativo)">${I(CHI[c], sm ? 10 : 13, 2.4)}</span>`;
+const CHI = { gmail: "mail", outlook: "mail", whatsapp: "chat", instagram: "cam", telegram: "send", slack: "hash", teams: "users", sms: "sms" };
+const EMAIL = { gmail: 1, outlook: 1 };
+const curto = id => ({ whatsapp: "WhatsApp", instagram: "Instagram", teams: "Teams" }[id] || canal(id).nome);
+const chIcon = (c, sm) => `<span class="ch ${c}${sm ? " sm" : ""}" title="${esc(canal(c).nome)}">${I(CHI[c], sm ? 10 : 13, 2.4)}</span>`;
 
 /* ---------------- dados de apoio ---------------- */
 const canal = id => D.canais.find(c => c.id === id) || { nome: id };
@@ -85,7 +88,7 @@ const valPill = v => v ? `<span class="pill ${v.sentido === "pagar" ? "pay" : "r
 
 /* ---------------- estado (somente nesta aba) ---------------- */
 function fresh() {
-  const s = { v: D.versao, conv: clone(D.conversas), tasks: clone(D.tarefas), regras: clone(D.regras), roteiro: 0, correcoes: 0, prefs: { alta: true, resumo: true, equipe: true }, notifs: [], seq: 100 };
+  const s = { v: D.versao, conv: clone(D.conversas), tasks: clone(D.tarefas), regras: clone(D.regras), correcoes: 0, prefs: { alta: true, resumo: true, equipe: true }, notifs: [], seq: 100 };
   s.conv.forEach(c => { c.msgs.forEach(m => { m.ts = tsOf(m.t); delete m.t; }); c.resolvida = false; });
   s.tasks.forEach(t => { t.feita = !!t.feita; });
   s.notifs = s.conv.filter(c => c.pri === "alta" && !c.lida).map(c => ({ id: "n" + c.id, conv: c.id, titulo: contato(c.contato).nome, txt: fill(c.acao), ts: last(c), lida: false }));
@@ -94,7 +97,6 @@ function fresh() {
 function last(c) { return Math.max.apply(null, c.msgs.map(m => m.ts)); }
 let S;
 try { const raw = sessionStorage.getItem(KEY); if (raw) { const o = JSON.parse(raw); if (o && o.v === D.versao) S = o; } } catch (e) { }
-const voltou = !!S;
 if (!S) S = fresh();
 function save() { try { sessionStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
 
@@ -168,9 +170,8 @@ function shell() {
         <header class="topbar">
           <label class="search">${I("search")}<input id="q" type="search" placeholder="Buscar por nome, valor, prazo, anexo…" autocomplete="off" aria-label="Buscar"><span class="kbd">/</span></label>
           <div class="top-r">
-            <button class="btn sec" data-a="sim" id="simbtn">${I("spark", 15)}Simular nova mensagem</button>
             <button class="icb" data-a="pop" id="bell" aria-label="Notificações">${I("bell", 18)}<span class="badge" id="bellN" hidden></span></button>
-            ${top === window ? `<a class="btn ghost" href="../" title="Voltar ao site do Assistence">${I("link", 15)}Site</a>` : ""}
+            <a class="btn ghost" ${siteLink()} title="Voltar ao site do Assistence">${I("back", 15)}Voltar ao site</a>
           </div>
         </header>
         <section class="view" id="view" tabindex="-1"></section>
@@ -188,6 +189,9 @@ function shell() {
   render();
 }
 
+/* link de volta ao site: página própria (../) ou, na prévia, a página que contém a demonstração */
+function siteLink() { return window.parent !== window ? 'href="#inicio" target="_parent"' : 'href="../"'; }
+
 /* ---------------- renderização geral ---------------- */
 function render(soft) {
   if (mode === "desk") { side(); } else { mtabs(); }
@@ -197,7 +201,6 @@ function render(soft) {
   if (!soft && !calm) { v.firstElementChild && v.firstElementChild.classList.add("v-in"); }
   const k = kpis(); const unread = S.notifs.filter(n => !n.lida).length;
   document.querySelectorAll("#bellN").forEach(b => { b.hidden = !unread; b.textContent = unread; });
-  const sb = $("#simbtn"); if (sb) { const fim = S.roteiro >= D.roteiro.length; sb.disabled = fim; sb.title = fim ? "Todas as mensagens programadas da demonstração já chegaram" : "Recebe uma mensagem programada da demonstração"; }
   if (ui.view === "busca" && mode === "mob") { const mi = $("#mq"); if (mi && document.activeElement !== mi) { mi.value = ui.q; } }
   save();
   return k;
@@ -245,8 +248,7 @@ function painelDesk() {
   const k = kpis();
   const top = S.conv.filter(c => !c.resolvida && c.pri !== "baixa").sort((a, b) => priW[a.pri] - priW[b.pri] || sortPrazo(a, b)).slice(0, 7);
   return `<div class="pad">
-    <div class="page-h"><div><h1>${saudacao()}, Camila</h1><p>${hojeLongo()} · ${S.conv.length} conversas de 3 canais demonstrativos organizadas pelo Assistence</p></div>
-      <div class="chips">${D.canais.map(c => `<span class="pill">${chIcon(c.id, true)}${esc(c.nome)}</span>`).join("")}</div></div>
+    <div class="page-h"><div><h1>${saudacao()}, Camila</h1><p>${hojeLongo()} · ${S.conv.length} conversas de ${D.canais.length} canais</p></div></div>
     <div class="kpis">
       ${kpi("prioridades", "star", "Prioridade alta", k.altas, "red", "conversas abertas")}
       ${kpi("tarefas", "task", "Ações pendentes", k.acoes, "ac", "na equipe")}
@@ -280,7 +282,7 @@ function semana() {
 }
 function porCanal() {
   const tot = S.conv.length;
-  return `<div class="chbar">${D.canais.map(c => { const n = S.conv.filter(x => x.canal === c.id).length; return `<div><span class="lbl">${chIcon(c.id, true)}${esc(c.nome.replace(" Business", ""))}</span><span class="b"><i style="width:${Math.round(n / tot * 100)}%;background:${c.cor}"></i></span><b class="num">${n}</b></div>`; }).join("")}</div>`;
+  return `<div class="chbar">${D.canais.map(c => { const n = S.conv.filter(x => x.canal === c.id).length; return `<div><span class="lbl">${chIcon(c.id, true)}${esc(curto(c.id))}</span><span class="b"><i style="width:${Math.round(n / tot * 100)}%;background:${c.cor}"></i></span><b class="num">${n}</b></div>`; }).join("")}</div>`;
 }
 
 /* caixa unificada / prioridades */
@@ -303,8 +305,8 @@ function inbox(forPri) {
   </div>`;
 }
 function chSeg() {
-  const opts = [["todos", "Todos", ""]].concat(D.canais.map(c => [c.id, c.nome.replace(" Business", ""), chIcon(c.id, true)]));
-  return `<div class="chseg" role="tablist" aria-label="Canal">${opts.map(([k, t, ic]) => `<button role="tab" aria-selected="${ui.canal === k}" class="${ui.canal === k ? "on" : ""}" data-a="canal" data-c="${k}">${ic}${t}</button>`).join("")}</div>`;
+  const opts = [["todos", "Todos os canais", ""]].concat(D.canais.map(c => [c.id, curto(c.id), chIcon(c.id, true)]));
+  return `<div class="chrow" role="tablist" aria-label="Canal">${opts.map(([k, t, ic]) => `<button role="tab" aria-selected="${ui.canal === k}" class="chip${ui.canal === k ? " on" : ""}" data-a="canal" data-c="${k}">${ic}${t}</button>`).join("")}</div>`;
 }
 function rowTags(c) {
   const t = [];
@@ -323,16 +325,16 @@ function row(c) {
     <span class="l3">${rowTags(c)}</span></button>`;
 }
 function thread(c) {
-  if (c.canal === "whatsapp") {
-    return `<div class="wa">${c.msgs.map(m => { const out = m.de === "voce"; return `<div class="bub${out ? " out" : ""}">${m.autor ? `<span class="au">${esc(m.autor)}</span>` : ""}${esc(fill(m.txt))}<small>${hm(m.ts)}${out ? " ✓✓" : ""}</small></div>${m.sim ? '<div class="sent-note">Resposta simulada · nada foi enviado de verdade</div>' : ""}`; }).join("")}</div>`;
+  if (!EMAIL[c.canal]) {
+    return `<div class="${c.canal === "whatsapp" ? "wa" : "chat " + c.canal}">${c.msgs.map(m => { const out = m.de === "voce"; return `<div class="bub${out ? " out" : ""}">${m.autor && !out ? `<span class="au">${esc(m.autor)}</span>` : ""}${esc(fill(m.txt))}<small>${hm(m.ts)}${out && c.canal === "whatsapp" ? " ✓✓" : ""}</small></div>`; }).join("")}${c.anexos.length ? attach(c) : ""}</div>`;
   }
-  return c.msgs.map((m, i) => { const out = m.de === "voce"; const who = out ? "Você" : contato(m.de).nome; return `<article class="mail${out ? " out" : ""}"><div class="mh">${out ? avatar("camila", "sm") : cAvatar(m.de, "sm")}<b>${esc(who)}</b>${!out && contato(m.de).email ? `<span class="mu">&lt;${esc(contato(m.de).email)}&gt;</span>` : ""}<time>${when(m.ts) === hm(m.ts) ? "Hoje, " + hm(m.ts) : when(m.ts) + ", " + hm(m.ts)}</time></div><p>${esc(fill(m.txt))}</p>${i === c.msgs.length - 1 && !out && c.anexos.length ? attach(c) : ""}${m.sim ? '<div class="sent-note" style="text-align:left">Resposta simulada · nada foi enviado de verdade</div>' : ""}</article>`; }).join("");
+  return c.msgs.map((m, i) => { const out = m.de === "voce"; const who = out ? "Você" : contato(m.de).nome; return `<article class="mail${out ? " out" : ""}"><div class="mh">${out ? avatar("camila", "sm") : cAvatar(m.de, "sm")}<b>${esc(who)}</b>${!out && contato(m.de).email ? `<span class="mu">&lt;${esc(contato(m.de).email)}&gt;</span>` : ""}<time>${when(m.ts) === hm(m.ts) ? "Hoje, " + hm(m.ts) : when(m.ts) + ", " + hm(m.ts)}</time></div><p>${esc(fill(m.txt))}</p>${i === c.msgs.length - 1 && !out && c.anexos.length ? attach(c) : ""}</article>`; }).join("");
 }
 const attach = c => `<div class="att">${c.anexos.map(a => `<span class="${a.tipo}">${I(a.tipo === "boleto" ? "barcode" : "file", 14)}${esc(a.nome)} <span class="mu">${esc(a.tam)}</span></span>`).join("")}</div>`;
 function reading(c) {
   const ct = contato(c.contato); const ts = tasksOf(c); const tk = ts.find(t => !t.feita);
   return `<div class="read-h p-in"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><h2>${esc(fill(c.assunto))}</h2><button class="icb" data-a="close" aria-label="Fechar conversa (Esc)">${I("x", 18)}</button></div>
-    <div class="from">${cAvatar(c.contato, "sm")}<b>${esc(ct.nome)}</b><span class="mu">${esc(ct.org)}</span><span class="pill">${chIcon(c.canal, true)}via ${esc(canal(c.canal).nome)} · demonstrativo</span></div>
+    <div class="from">${cAvatar(c.contato, "sm")}<b>${esc(ct.nome)}</b><span class="mu">${esc(ct.org)}</span><span class="pill">${chIcon(c.canal, true)}via ${esc(canal(c.canal).nome)}</span></div>
     <div class="read-tools">
       ${c.sugestoes.length || c.canal ? `<button class="btn" data-a="reply" data-id="${c.id}">${I("reply", 15)}Responder</button>` : ""}
       ${tk ? `<button class="btn sec" data-a="topen" data-id="${tk.id}">${I("task", 15)}Ver tarefa</button>` : `<button class="btn sec" data-a="mktask" data-id="${c.id}">${I("plus", 15)}Criar tarefa</button>`}
@@ -391,13 +393,13 @@ function contasView() {
     <div class="bill-sum">
       <div class="card kpi"><span>${I("money", 14)}A pagar em 7 dias</span><b class="red num">${brl(k.pagar)}</b><small>${k.nPagar} contas abertas</small></div>
       <div class="card kpi"><span>${I("money", 14)}A receber</span><b class="num" style="color:var(--lo)">${brl(rec)}</b><small>boletos que você precisa emitir</small></div>
-      <div class="card kpi"><span>${I("check", 14)}Marcadas como pagas</span><b class="num">${pagas.length}</b><small>nesta demonstração</small></div>
+      <div class="card kpi"><span>${I("check", 14)}Pagas</span><b class="num">${pagas.length}</b><small>neste mês</small></div>
     </div>
     <div class="card">${l.map(t => { const o = t.origens.map(C).filter(Boolean); const pay = t.valor.sentido === "pagar"; return `<div class="bill${t.feita ? " paid" : ""}">${o[0] ? chIcon(o[0].canal) : '<span class="ch" style="background:var(--mu)"></span>'}
-      <div style="min-width:0"><b>${esc(t.titulo)}${o.length > 1 ? `<span class="dup">${I("layers", 11)}recebida por ${o.map(c => canal(c.canal).nome.replace(" Business", "")).join(" e ")}</span>` : ""}</b><small>${pay ? "Vencimento" : "Emitir até"}: ${prazoTxt(t.prazo, true)}${o[0] ? " · " + esc(contato(o[0].contato).nome) : ""}${t.feita ? (pay ? " · marcada como paga" : " · emitido") : ""}</small></div>
+      <div style="min-width:0"><b>${esc(t.titulo)}${o.length > 1 ? `<span class="dup">${I("layers", 11)}recebida por ${o.map(c => curto(c.canal)).join(" e ")}</span>` : ""}</b><small>${pay ? "Vencimento" : "Emitir até"}: ${prazoTxt(t.prazo, true)}${o[0] ? " · " + esc(contato(o[0].contato).nome) : ""}${t.feita ? (pay ? " · marcada como paga" : " · emitido") : ""}</small></div>
       <span class="amt ${pay ? "" : ""}" style="color:${pay ? "var(--tx)" : "var(--lo)"}">${pay ? "" : "+ "}${brl(t.valor.v)}</span>
       <span style="display:flex;gap:6px">${o[0] ? `<button class="btn ghost" data-a="open" data-id="${o[0].id}">Ver mensagem</button>` : ""}<button class="btn ${t.feita ? "sec" : "ok"}" data-a="ttoggle" data-id="${t.id}">${t.feita ? "Desfazer" : pay ? "Marcar como paga" : "Marcar como emitido"}</button></span></div>`; }).join("")}</div>
-    <p class="note">${I("info", 14)}<span>O Assistence identifica e soma as contas, mas não faz pagamentos. Um boleto nunca é tratado como comprovante de pagamento.</span></p>`;
+`;
 }
 
 /* contatos */
@@ -415,25 +417,22 @@ function relatoriosView() {
   const porResp = D.equipe.concat([{ id: null, nome: "Sem responsável" }]).map(m => ({ m, n: openTasks().filter(t => t.resp === m.id).length }));
   const maxR = Math.max(1, ...porResp.map(x => x.n));
   const cats = D.categorias.map(c => ({ c, n: S.conv.filter(x => x.cat === c).length })); const maxC = Math.max(...cats.map(x => x.n));
-  return `<div class="page-h"><div><h1>Relatórios</h1><p>Visão da equipe na última semana. Números de exemplo da demonstração.</p></div></div>
+  return `<div class="page-h"><div><h1>Relatórios</h1><p>Visão da equipe na última semana.</p></div></div>
     <div class="rep">
-      <div class="card"><div class="sec-h"><h3>${I("layers", 15)}Mensagens recebidas por canal</h3><span class="mu" style="font-size:12px">últimos 7 dias</span></div><div class="bars">${D.canais.map(c => `<div><span style="display:flex;gap:7px;align-items:center">${chIcon(c.id, true)}${esc(c.nome.replace(" Business", ""))}</span><span class="b"><i style="width:${R.volume[c.id] / maxV * 100}%;background:${c.cor}"></i></span><b>${R.volume[c.id]}</b></div>`).join("")}</div></div>
-      <div class="card"><div class="sec-h"><h3>${I("clock", 15)}Tempo médio de resposta</h3></div><div class="bars">${D.canais.map(c => `<div><span style="display:flex;gap:7px;align-items:center">${chIcon(c.id, true)}${esc(c.nome.replace(" Business", ""))}</span><span></span><b style="text-align:left;white-space:nowrap">${R.resposta[c.id]}</b></div>`).join("")}<div style="grid-template-columns:1fr;border-top:1px solid var(--bd);padding-top:12px"><span class="mu">Tempo poupado com a triagem automática: <b style="color:var(--tx)">${R.tempoPoupado}</b> na semana</span></div></div></div>
+      <div class="card"><div class="sec-h"><h3>${I("layers", 15)}Mensagens recebidas por canal</h3><span class="mu" style="font-size:12px">últimos 7 dias</span></div><div class="bars">${D.canais.map(c => `<div><span style="display:flex;gap:7px;align-items:center">${chIcon(c.id, true)}${esc(curto(c.id))}</span><span class="b"><i style="width:${R.volume[c.id] / maxV * 100}%;background:${c.cor}"></i></span><b>${R.volume[c.id]}</b></div>`).join("")}</div></div>
+      <div class="card"><div class="sec-h"><h3>${I("clock", 15)}Tempo médio de resposta</h3></div><div class="bars">${D.canais.map(c => `<div><span style="display:flex;gap:7px;align-items:center">${chIcon(c.id, true)}${esc(curto(c.id))}</span><span></span><b style="text-align:left;white-space:nowrap">${R.resposta[c.id]}</b></div>`).join("")}<div style="grid-template-columns:1fr;border-top:1px solid var(--bd);padding-top:12px"><span class="mu">Tempo poupado com a triagem automática: <b style="color:var(--tx)">${R.tempoPoupado}</b> na semana</span></div></div></div>
       <div class="card"><div class="sec-h"><h3>${I("users", 15)}Pendências por pessoa</h3><span class="mu" style="font-size:12px">agora</span></div><div class="bars">${porResp.map(x => `<div><span style="display:flex;gap:7px;align-items:center">${avatar(x.m.id, "xs")}${esc(x.m.nome.split(" ")[0])}</span><span class="b"><i style="width:${x.n / maxR * 100}%"></i></span><b>${x.n}</b></div>`).join("")}</div></div>
       <div class="card"><div class="sec-h"><h3>${I("layers", 15)}Conversas por categoria</h3><span class="mu" style="font-size:12px">agora</span></div><div class="bars">${cats.map(x => `<div><span>${esc(x.c)}</span><span class="b"><i style="width:${x.n / maxC * 100}%;background:${catColor(x.c)}"></i></span><b>${x.n}</b></div>`).join("")}</div></div>
-    </div>
-    <div class="card" style="padding:14px 16px"><span class="mu">Correções feitas por você nesta demonstração: <b style="color:var(--tx)">${S.correcoes}</b>. Cada correção ensina o Assistence a classificar melhor as próximas mensagens.</span></div>`;
+    </div>`;
 }
 
 /* configurações */
 function configView() {
-  return `<div class="page-h"><div><h1>Configurações</h1><p>Canais, regras e notificações da demonstração.</p></div></div>
-    <div class="card" style="padding:14px 16px;border-color:var(--me);background:var(--me-s)"><p style="display:flex;gap:10px;align-items:flex-start;color:var(--tx2)">${I("info", 16)}<span><b>Conexões demonstrativas.</b> Gmail, Outlook e WhatsApp aparecem conectados apenas para ilustrar como o Assistence reúne os canais. Nenhuma conta real está ligada a esta demonstração, e nada do que você faz aqui sai deste navegador.</span></p></div>
-    <div class="conn">${D.canais.map(c => `<div class="card">${chIcon(c.id)}<div><b>${esc(c.nome)}</b><div class="mu" style="font-size:12.5px">${esc(c.conta)}</div></div><span class="st"><i></i>Conectado · demonstrativo</span><span class="mu" style="font-size:12.5px">${S.conv.filter(x => x.canal === c.id).length} conversas de exemplo</span></div>`).join("")}</div>
+  return `<div class="page-h"><div><h1>Configurações</h1><p>Canais conectados, regras e notificações.</p></div></div>
+    <div class="conn">${D.canais.map(c => `<div class="card">${chIcon(c.id)}<div><b>${esc(c.nome)}</b><div class="mu" style="font-size:12.5px">${esc(c.conta)}</div></div><span class="st"><i></i>Demonstrativo</span><span class="mu" style="font-size:12.5px">${S.conv.filter(x => x.canal === c.id).length} conversas</span></div>`).join("")}</div>
     <div class="card"><div class="sec-h"><h3>${I("layers", 15)}Regras de organização</h3></div>${S.regras.map(r => `<div class="rule"><span style="flex:1">${esc(r.nome)}</span><button class="sw" role="switch" aria-checked="${r.ativa}" aria-label="${esc(r.nome)}" data-a="rule" data-id="${r.id}"></button></div>`).join("")}</div>
     <div class="card"><div class="sec-h"><h3>${I("bell", 15)}Notificações</h3></div>
-      ${[["alta", "Avisar só mensagens de prioridade alta"], ["resumo", "Resumo do dia às 8h"], ["equipe", "Avisar quando uma conversa for atribuída a mim"]].map(([k, t]) => `<div class="rule"><span style="flex:1">${t}</span><button class="sw" role="switch" aria-checked="${S.prefs[k]}" aria-label="${t}" data-a="pref" data-k="${k}"></button></div>`).join("")}</div>
-    <div class="card" style="padding:16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:220px"><b>Recomeçar a demonstração</b><p class="mu" style="font-size:13px">Volta todas as conversas, tarefas e regras ao estado inicial.</p></div><button class="btn sec" data-a="reset">${I("reset", 15)}Recomeçar</button></div>`;
+      ${[["alta", "Avisar só mensagens de prioridade alta"], ["resumo", "Resumo do dia às 8h"], ["equipe", "Avisar quando uma conversa for atribuída a mim"]].map(([k, t]) => `<div class="rule"><span style="flex:1">${t}</span><button class="sw" role="switch" aria-checked="${S.prefs[k]}" aria-label="${t}" data-a="pref" data-k="${k}"></button></div>`).join("")}</div>`;
 }
 
 /* busca */
@@ -495,10 +494,10 @@ function mInicio() {
   const hoje = openTasks().filter(t => t.prazo && t.prazo.d <= 0).sort(sortPrazo);
   return `<div><div class="mhello"><span class="demo-tag" style="justify-self:start">${I("info", 12, 2.4)}Demonstração · dados fictícios</span><h2>${saudacao()}, Camila</h2><p class="mu">${hojeLongo()}</p></div>
     <div class="msec"><div class="card resume" style="border-radius:16px"><h3>${I("spark", 15)}Resumo do dia</h3><p style="font-size:14px">${resumoTxt()}</p></div></div>
-    <div class="msec"><div class="mk"><button data-a="go" data-v="prioridades"><b class="red">${k.altas}</b><span>Prioridade alta</span></button><button data-a="go" data-v="tarefas"><b>${k.hoje + k.atrasadas}</b><span>Para hoje e atrasadas</span></button><button data-a="go" data-v="contas"><b class="num">${curto(k.pagar)}</b><span>A pagar em 7 dias</span></button></div></div>
+    <div class="msec"><div class="mk"><button data-a="go" data-v="prioridades"><b class="red">${k.altas}</b><span>Prioridade alta</span></button><button data-a="go" data-v="tarefas"><b>${k.hoje + k.atrasadas}</b><span>Para hoje e atrasadas</span></button><button data-a="go" data-v="contas"><b class="num">${brlCurto(k.pagar)}</b><span>A pagar em 7 dias</span></button></div></div>
     <div class="msec"><div class="msec-h"><h3>Prioridades</h3><button class="link" data-a="go" data-v="prioridades">Ver todas</button></div><div class="mcard">${pri.slice(0, 4).map(mRow).join("") || '<div class="empty">Nada urgente agora.</div>'}</div></div>
     <div class="msec"><div class="msec-h"><h3>Para hoje</h3><button class="link" data-a="go" data-v="tarefas">Tarefas</button></div><div class="mcard">${hoje.length ? hoje.map(mTask).join("") : '<div class="empty">Nada para hoje.</div>'}</div></div>
-    <div class="msec" style="padding-bottom:18px"><button class="btn sec" style="width:100%;padding:12px" data-a="sim" ${S.roteiro >= D.roteiro.length ? "disabled" : ""}>${I("spark", 15)}${S.roteiro >= D.roteiro.length ? "Todas as mensagens de exemplo já chegaram" : "Simular nova mensagem"}</button></div></div>`;
+    <div style="height:16px"></div></div>`;
 }
 function mCaixa(forPri) {
   const l = convList(forPri);
@@ -523,8 +522,8 @@ function mMais() {
   const it = (v, l, i, extra = "") => `<button class="li" data-a="go" data-v="${v}"><span class="ic">${I(i, 17)}</span>${l}${extra}${I("arrow", 16)}</button>`;
   return `<div style="padding:14px 12px;display:grid;gap:14px">
     <div class="mcard mlist">${it("prioridades", "Prioridades", "star")}${it("contatos", "Contatos frequentes", "users")}${it("relatorios", "Relatórios", "chart")}${it("busca", "Buscar", "search")}</div>
-    <div class="mcard mlist">${it("config", "Canais, regras e notificações", "gear")}<button class="li" data-a="sim" ${S.roteiro >= D.roteiro.length ? "disabled" : ""}><span class="ic">${I("spark", 17)}</span>Simular nova mensagem${I("arrow", 16)}</button>${top === window ? `<a class="li" href="../"><span class="ic">${I("link", 17)}</span>Voltar ao site${I("arrow", 16)}</a>` : ""}</div>
-    <div class="card" style="padding:14px;border-color:var(--me);background:var(--me-s);font-size:13px;color:var(--tx2)"><b>Demonstração com dados fictícios.</b> Gmail, Outlook e WhatsApp aparecem como conexões demonstrativas. Nada do que você faz aqui é enviado ou salvo fora deste navegador.</div></div>`;
+    <div class="mcard mlist">${it("config", "Canais, regras e notificações", "gear")}<a class="li" ${siteLink()}><span class="ic">${I("back", 17)}</span>Voltar ao site${I("arrow", 16)}</a></div>
+    <p class="mu" style="font-size:12.5px;padding:0 6px">Demonstração com dados fictícios.</p></div>`;
 }
 
 /* tela de conversa no celular */
@@ -539,7 +538,7 @@ function openS2(id) {
 function drawS2() {
   const c = C(ui.s2); const el = $("#s2"); if (!c || !el) return;
   const ct = contato(c.contato); const ts = tasksOf(c); const tk = ts.find(t => !t.feita);
-  el.innerHTML = `<div class="s2top"><button class="icb" data-a="s2close" aria-label="Voltar">${I("back", 22)}</button>${cAvatar(c.contato, "sm")}<div class="tt"><b>${esc(ct.nome)}</b><small>${chIcon(c.canal, true)}${esc(canal(c.canal).nome)} · demonstrativo</small></div></div>
+  el.innerHTML = `<div class="s2top"><button class="icb" data-a="s2close" aria-label="Voltar">${I("back", 22)}</button>${cAvatar(c.contato, "sm")}<div class="tt"><b>${esc(ct.nome)}</b><small>${chIcon(c.canal, true)}${esc(canal(c.canal).nome)}</small></div></div>
     <div class="s2body">
       <div class="s2info"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b style="font-size:13px;display:flex;gap:6px;align-items:center">${I("spark", 14)}Informações identificadas</b><span class="mu num" style="font-size:12px">${c.conf}% de confiança</span></div>
         <p class="sum">${esc(fill(c.resumo))}</p>
@@ -576,11 +575,10 @@ function closeModal() { const a = $("#modal"), b = $("#scrim"); if (a) a.remove(
 function replyModal(id) {
   const c = C(id);
   modal(`Responder ${contato(c.contato).nome}`, `
-    <p class="mu" style="font-size:13px">Pelo ${esc(canal(c.canal).nome)} · conexão demonstrativa</p>
+    <p class="mu" style="font-size:13px">Pelo ${esc(canal(c.canal).nome)}</p>
     ${c.sugestoes.length ? `<div class="fld"><label>Respostas sugeridas</label><div class="sugs">${c.sugestoes.map((s, i) => `<button class="sug" data-a="usesug" data-i="${i}">${esc(fill(s))}</button>`).join("")}</div></div>` : ""}
     <div class="fld"><label for="rtxt">Sua resposta</label><textarea id="rtxt" placeholder="Escreva aqui…"></textarea></div>
-    <p class="note">${I("info", 14)}<span>Na demonstração, a resposta aparece na conversa, mas nada é enviado de verdade.</span></p>
-    <div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn sec" data-a="mclose">Cancelar</button><button class="btn" data-a="send" data-id="${c.id}">${I("send", 15)}Enviar (simulado)</button></div>`);
+    <div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn sec" data-a="mclose">Cancelar</button><button class="btn" data-a="send" data-id="${c.id}">${I("send", 15)}Enviar</button></div>`);
 }
 function assignModal(id) {
   const c = C(id);
@@ -598,8 +596,7 @@ function editModal(id, f) {
   const c = C(id); const [title, opts, lab] = EDITS[f];
   const cur = f === "prazo" ? (c.prazo ? c.prazo.d : null) : c[f];
   modal(`Corrigir ${title.toLowerCase()}`, `<p class="mu" style="font-size:13px">O Assistence classificou como <b style="color:var(--tx)">${esc(lab(cur))}</b>. Escolha o correto:</p>
-    <div style="display:grid;gap:8px">${opts.map(o => `<button class="opt${o === cur ? " on" : ""}" data-a="setf" data-id="${c.id}" data-f="${f}" data-v="${o === null ? "" : esc(o)}">${f === "pri" ? `<span class="dot ${PRI[o][0]}"></span>` : ""}<span><b>${esc(lab(o))}</b></span></button>`).join("")}</div>
-    <p class="note">${I("spark", 14)}<span>Cada correção ensina o Assistence a classificar melhor as próximas mensagens parecidas.</span></p>`);
+    <div style="display:grid;gap:8px">${opts.map(o => `<button class="opt${o === cur ? " on" : ""}" data-a="setf" data-id="${c.id}" data-f="${f}" data-v="${o === null ? "" : esc(o)}">${f === "pri" ? `<span class="dot ${PRI[o][0]}"></span>` : ""}<span><b>${esc(lab(o))}</b></span></button>`).join("")}</div>`);
 }
 function newTaskModal(fromConv) {
   const c = fromConv ? C(fromConv) : null;
@@ -612,7 +609,7 @@ function newTaskModal(fromConv) {
 function notifPop(anchor) {
   const list = S.notifs.slice().sort((a, b) => b.ts - a.ts);
   const body = list.length ? list.map(n => `<button class="nt${!n.lida ? " new" : ""}" data-a="open" data-id="${n.conv}">${chIcon(C(n.conv) ? C(n.conv).canal : "gmail", true)}<span><b>${esc(n.titulo)}</b><span>${esc(n.txt)}</span></span><span class="mu" style="margin-left:auto;font-size:11.5px">${when(n.ts)}</span></button>`).join("") : '<div class="empty">Sem notificações.</div>';
-  if (!isDesk()) { modal("Notificações", `<div class="mcard">${body}</div><p class="note">${I("bell", 14)}<span>Só mensagens de prioridade alta geram aviso, para não interromper você à toa.</span></p>`); S.notifs.forEach(n => n.lida = true); render(true); return; }
+  if (!isDesk()) { modal("Notificações", `<div class="mcard">${body}</div>`); S.notifs.forEach(n => n.lida = true); render(true); return; }
   closePop();
   const r = anchor.getBoundingClientRect();
   const p = document.createElement("div"); p.className = "pop"; p.id = "pop"; p.style.top = (r.bottom + 8) + "px"; p.style.right = (innerWidth - r.right) + "px";
@@ -670,10 +667,10 @@ function resolve(id) {
 function send(id) {
   const c = C(id); const ta = $("#rtxt"); const txt = ta ? ta.value.trim() : "";
   if (!txt) { if (ta) { ta.focus(); ta.style.borderColor = "var(--hi)"; } return; }
-  c.msgs.push({ de: "voce", ts: Date.now(), txt, sim: true }); c.aguardando = false; c.lida = true;
+  c.msgs.push({ de: "voce", ts: Date.now(), txt }); c.aguardando = false; c.lida = true;
   closeModal();
   const open = tasksOf(c).find(t => !t.feita && /responder|confirmar|definir/i.test(t.titulo));
-  toast("Resposta registrada na demonstração", "Nada foi enviado de verdade.", open ? { label: "Concluir tarefa", fn: () => toggleTask(open.id) } : null);
+  toast("Resposta enviada", contato(c.contato).nome, open ? { label: "Concluir tarefa", fn: () => toggleTask(open.id) } : null);
   render(true); if (ui.s2) drawS2();
   const th = $("#thread"); if (th) th.scrollTop = th.scrollHeight;
 }
@@ -686,13 +683,13 @@ function setField(id, f, raw) {
   else { c[f] = v; if (f === "pri") tasksOf(c).forEach(t => t.pri = v === "baixa" ? "media" : v); }
   if (f !== "resp") { S.correcoes++; c.conf = 100; c.motivos = ["Corrigido por você"].concat(c.motivos.filter(m => m !== "Corrigido por você")); }
   closeModal();
-  toast(f === "resp" ? "Responsável atualizado" : "Correção registrada", f === "resp" ? (v ? membro(v).nome : "Sem responsável") : `O Assistence vai usar essa correção nas próximas mensagens de ${contato(c.contato).nome}.`);
+  toast("Classificação corrigida", contato(c.contato).nome);
   render(true); if (ui.s2) drawS2();
 }
 function setResp(id, m) {
   const c = C(id); c.resp = m || null; tasksOf(c).forEach(t => { if (!t.feita) t.resp = c.resp; });
   closeModal();
-  toast(m ? `Atribuída a ${membro(m).nome}` : "Sem responsável", m && m !== "camila" ? `${membro(m).nome.split(" ")[0]} foi avisado (simulado).` : "");
+  toast(m ? `Atribuída a ${membro(m).nome}` : "Sem responsável", contato(c.contato).nome);
   render(true); if (ui.s2) drawS2();
 }
 function saveTask(fromConv) {
@@ -703,26 +700,6 @@ function saveTask(fromConv) {
   if (c) c.tarefas.push(id);
   closeModal(); toast("Tarefa criada", titulo); render(true); if (ui.s2) drawS2();
 }
-function simulate() {
-  if (S.roteiro >= D.roteiro.length) return;
-  const r = clone(D.roteiro[S.roteiro]); S.roteiro++;
-  let cid;
-  if (r.tipo === "junta") {
-    const c = C(r.conversa); cid = c.id;
-    c.msgs.push({ de: r.msg.de, ts: Date.now(), txt: r.msg.txt }); c.lida = false; c.resolvida = false; c.aguardando = true;
-    Object.assign(c, r.muda);
-    const t = T(r.tarefa.id); if (t && !t.feita) t.prazo = r.tarefa.prazo;
-  } else {
-    const c = r.conversa; c.msgs.forEach(m => { m.ts = Date.now(); delete m.t; }); c.resolvida = false; cid = c.id;
-    S.conv.push(c); S.tasks.push(Object.assign({ feita: false }, r.tarefa));
-  }
-  const c = C(cid); c._new = true; setTimeout(() => { delete c._new; }, 1700);
-  S.notifs.push({ id: "n" + Date.now(), conv: cid, titulo: contato(c.contato).nome, txt: r.aviso, ts: Date.now(), lida: false });
-  toast(r.aviso, `${canal(c.canal).nome} · organizada como ${PRI[c.pri][1].toLowerCase()} prioridade`, { label: "Abrir", fn: () => openConv(cid) });
-  const bell = document.querySelector("#bellN"); if (bell && !calm) { bell.parentElement.classList.remove("bump"); void bell.offsetWidth; bell.parentElement.classList.add("bump"); }
-  render(true); if (ui.s2 === cid) drawS2();
-}
-
 document.addEventListener("click", e => {
   const el = e.target.closest("[data-a]");
   if (ui.pop && !e.target.closest("#pop") && !(el && el.dataset.a === "pop")) closePop();
@@ -752,12 +729,9 @@ document.addEventListener("click", e => {
     case "newtask": newTaskModal(null); break;
     case "savetask": saveTask(id); break;
     case "mclose": closeModal(); break;
-    case "sim": simulate(); break;
     case "pop": if (ui.pop) closePop(); else notifPop(el); break;
     case "rule": { const r = S.regras.find(x => x.id === id); r.ativa = !r.ativa; toast(r.ativa ? "Regra ativada" : "Regra pausada", r.nome); render(true); break; }
     case "pref": { const k = el.dataset.k; S.prefs[k] = !S.prefs[k]; render(true); break; }
-    case "reset": modal("Recomeçar a demonstração?", `<p>Todas as conversas, tarefas, correções e regras voltam ao estado inicial.</p><div style="display:flex;justify-content:flex-end;gap:8px"><button class="btn sec" data-a="mclose">Cancelar</button><button class="btn" data-a="doreset">${I("reset", 15)}Recomeçar</button></div>`); break;
-    case "doreset": S = fresh(); Object.assign(ui, { view: "painel", sel: null, canal: "todos", filtro: "todas", cat: null, contato: null, q: "" }); closeModal(); if (ui.s2) closeS2(); render(); toast("Demonstração reiniciada", "Tudo voltou ao estado inicial."); break;
     case "s2close": closeS2(); break;
     case "mback": go(ui.view === "prioridades" ? "painel" : "mais"); break;
     case "tryq": ui.q = el.dataset.q; { const q = $("#q"); if (q) q.value = ui.q; } if (ui.view !== "busca") ui.prev = ui.view; ui.view = "busca"; render(true); break;
@@ -796,14 +770,5 @@ document.addEventListener("keydown", e => {
 let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if ((isDesk() ? "desk" : "mob") !== mode) { closeModal(); closePop(); if (ui.s2) { const el = $("#s2"); if (el) el.remove(); const id = ui.s2; ui.s2 = null; if (isDesk()) ui.sel = id; } if (ui.view === "mais" && isDesk()) ui.view = "painel"; shell(); } }, 120); });
 
 /* ---------------- abertura ---------------- */
-function boot() {
-  const b = $("#boot");
-  shell();
-  if (!b) return;
-  const steps = [...b.querySelectorAll("li")]; const bar = b.querySelector(".boot-bar i");
-  const quick = voltou || calm; const dt = quick ? 0 : 260;
-  steps.forEach((li, i) => setTimeout(() => { li.classList.add("ok"); bar.style.width = ((i + 1) / steps.length * 100) + "%"; }, quick ? 0 : 180 + i * dt));
-  setTimeout(() => { b.classList.add("out"); setTimeout(() => b.remove(), 400); }, quick ? 120 : 180 + steps.length * dt + 250);
-}
-if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", shell); else shell();
 })();

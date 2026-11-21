@@ -21,8 +21,7 @@ PAGES={"inicio":("index","Assistence | Organização inteligente de mensagens","
 "suporte":("suporte","Suporte | Assistence","Central de ajuda do Assistence: guias, perguntas frequentes e contato com a equipe."),
 "acessar":("acessar","Entrar | Assistence","Entre no Assistence com a sua conta Google ou experimente a demonstração."),
 "privacidade":("privacidade","Política de Privacidade | Assistence","Como o Assistence trata os seus dados pessoais e os dados das contas conectadas."),
-"termos":("termos","Termos de Uso | Assistence","As regras de uso do Assistence."),
-"demonstracao":("demonstracao","Demonstração | Assistence","Experimente o Assistence com conversas fictícias de Gmail, Outlook e WhatsApp, no modo computador ou celular, sem conectar nenhuma conta.")}
+"termos":("termos","Termos de Uso | Assistence","As regras de uso do Assistence.")}
 fn=lambda k: PAGES[k][0]+".html"
 def links(h):
     return re.sub(r'href="#([\w-]+)"',lambda m:f'href="{fn(m.group(1))}"' if m.group(1) in PAGES else m.group(0),h)
@@ -33,7 +32,7 @@ header,footer=links(header),links(footer)
 js=js.replace('const href=k=>"#"+k;','const FN={inicio:"index",produto:"recursos"};const href=k=>(FN[k]||k)+".html";')
 js=js.replace('<a href="${href("area")}" data-private>${I(ICO.lock,20)}Área privada</a>','')
 n=len(js); js=re.sub(r"function route\(\)\{.*?window\.addEventListener\(\"hashchange\",route\);",
- 'function route(){document.querySelectorAll("[data-v]").forEach(a=>a.classList.toggle("on",a.dataset.v===window.PAGE));if(window.PAGE==="demonstracao"){document.body.classList.add("demo-mode");loadDemo()}}',js,flags=re.S); assert len(js)<n
+ 'function route(){document.querySelectorAll("[data-v]").forEach(a=>a.classList.toggle("on",a.dataset.v===window.PAGE));}',js,flags=re.S); assert len(js)<n
 n=len(js); js=re.sub(r"/\* ---------- área privada ---------- \*/.*?(?=route\(\);\n\}\)\(\);)","",js,flags=re.S); assert len(js)<n
 js=js.replace('href="#acessar"','href="acessar.html"').replace('CFG.demo||"#acessar"','CFG.demo||"acessar.html"')
 assert "startArea" not in js and "Área privada" not in js
@@ -46,14 +45,11 @@ open(out+"/assets/config.js","w",encoding="utf8").write('''/* Ligações do site
    app:  endereço do aplicativo do Assistence (o Worker da Cloudflare), terminando em "/".
          Exemplo: "https://assistence-mvp.SUA-CONTA.workers.dev/"  ou, com domínio próprio, "https://app.assistence.com.br/".
          Enquanto estiver vazio, os botões "Entrar" levam à página Entrar, que oferece a demonstração.
-   demo: página do site que mostra a demonstração (modo computador ou celular).
-   demoSrc e tab: a demonstração em si (pasta demonstracao/, com dados fictícios próprios), aberta dentro da página
-         e no botão "Abrir em nova aba". Ela não usa o motor nem as integrações do aplicativo real. */
+   demo: a demonstração, uma página própria (pasta demonstracao/, com dados fictícios). Ela não usa o motor
+         nem as integrações do aplicativo real. */
 window.ASSISTENCE={
   app:"",
-  demo:"demonstracao.html",
-  demoSrc:"demonstracao/",
-  tab:"demonstracao/"
+  demo:"demonstracao/"
 };
 ''')
 for f in os.listdir(IMG): shutil.copy(os.path.join(IMG,f),out+"/img/"+f) if os.path.isdir(out+"/img") else (os.makedirs(out+"/img"),shutil.copy(os.path.join(IMG,f),out+"/img/"+f))

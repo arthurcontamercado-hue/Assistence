@@ -309,32 +309,19 @@ footer{background:var(--ink);color:var(--on-ink-mu);padding-block:64px 32px;font
 .sheet a.btn{color:#fff;border-bottom:0;padding:13px;justify-content:center}
 .sheet a.btn.sec{color:var(--tx);border:1px solid var(--bd2)}
 
-/* ---------- demonstração dentro do site ---------- */
-.demo-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;padding-block:28px 20px}
-.demo-head h1{font-size:clamp(26px,3.4vw,36px);margin-top:10px}
-.demo-head p{color:var(--mu);margin-top:6px;max-width:56ch}
-.demo-tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.seg{display:inline-flex;gap:4px;padding:4px;border-radius:12px;background:var(--sf2);border:1px solid var(--bd)}
-.seg button{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:9px;font-weight:600;font-size:14px;color:var(--mu)}
-.seg button.on{background:var(--sf);color:var(--tx);box-shadow:var(--sh)}
-.stage{background:var(--bg2);border-block:1px solid var(--bd);padding-block:24px 40px}
-.frame-wrap{margin:0 auto;width:100%;max-width:1440px;height:max(640px,calc(100vh - 230px));border:1px solid var(--bd2);border-radius:14px;overflow:hidden;background:var(--sf);box-shadow:var(--sh-lg);position:relative;transition:max-width .3s}
-.frame-wrap.as-phone{max-width:400px;height:min(844px,max(640px,calc(100vh - 230px)));border-radius:36px;border:9px solid var(--bezel)}
+/* ---------- demonstração (só na prévia do Claude) ---------- */
+.stage{background:var(--bg)}
+.frame-wrap{position:relative;width:100%;height:100dvh;background:var(--sf)}
 .frame-wrap iframe{width:100%;height:100%;border:0;display:block;background:#f4f6fb;opacity:0;transition:opacity .35s ease}
 .frame-wrap iframe.ready{opacity:1}
 .frame-msg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:var(--mu);background:var(--sf)}
 .frame-msg[hidden]{display:none}
-.frame-msg b{display:block;color:var(--tx);font-size:17px;margin-bottom:6px}
+.frame-msg b{display:block;color:var(--tx);font-size:16px}
 .spin{width:28px;height:28px;border-radius:50%;border:3px solid var(--bd2);border-top-color:var(--ac);margin:0 auto 14px;animation:spin .9s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.demo-note{font-size:13.5px;color:var(--mu);text-align:center;margin-top:14px}
-.frame-wrap:fullscreen{max-width:none;border:0;border-radius:0;height:100vh}
 body.app-mode{padding-bottom:0}
-body.app-mode header.top,body.app-mode .demo-head,body.app-mode footer,body.app-mode .tabbar,body.app-mode .demo-note{display:none!important}
-body.app-mode .stage{padding:0;border:0}
-body.app-mode .stage .wrap{padding:0}
-body.app-mode .frame-wrap{max-width:none;border:0;border-radius:0;box-shadow:none;height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:0}
-body.app-mode .page:not([hidden]){animation:none}
+body.app-mode header.top,body.app-mode footer,body.app-mode .tabbar{display:none!important}
+body.app-mode .frame-wrap{height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
 
 /* ---------- área privada ---------- */
 .ws-tabs{display:flex;gap:6px;margin:0 0 18px;flex-wrap:wrap}
@@ -437,15 +424,6 @@ body.app-mode .page:not([hidden]){animation:none}
   .fgrid>div:first-child{grid-column:1/-1}
   footer{padding-block:44px 28px}
   .devices .laptop{margin-left:0}
-  .demo-head{padding-block:12px;height:74px;align-content:center}
-  .demo-head p,.demo-head .demo-tools{display:none}
-  .demo-head h1{font-size:22px;margin-top:4px}
-  .stage{padding:0;border:0;background:var(--bg)}
-  .stage .wrap{padding:0}
-  .frame-wrap,.frame-wrap.as-phone{max-width:none;border:0;border-radius:0;box-shadow:none;height:calc(100dvh - 58px - 74px - env(safe-area-inset-bottom,0px) - env(safe-area-inset-top,0px));min-height:480px}
-  body.demo-mode{padding-bottom:0}
-  body.demo-mode .tabbar,body.demo-mode footer{display:none}
-  .demo-note{display:none}
 }
 @media (min-width:1024px){.tabbar,.sheet,.sheet-bg{display:none!important}}
 @media (max-width:1180px) and (min-width:1024px){.menu a{padding:8px 8px;font-size:14px}.nav{gap:16px}}
@@ -453,8 +431,7 @@ body.app-mode .page:not([hidden]){animation:none}
 .card,.topic,.plat .card{transition:border-color .2s ease,box-shadow .2s ease}
 .btn{transition:background .15s,transform .12s ease,border-color .15s}
 .menu a{transition:color .15s,background .15s}
-.tour-tabs button,.seg button{transition:background .2s,color .2s,box-shadow .2s}
-.frame-wrap{transition:max-width .35s cubic-bezier(.2,.75,.25,1),height .35s cubic-bezier(.2,.75,.25,1),border-radius .35s}
+.tour-tabs button{transition:background .2s,color .2s,box-shadow .2s}
 @media (hover:hover){.card:hover,.topic:hover{border-color:var(--bd2);box-shadow:var(--sh)}}
 @media (prefers-reduced-motion:no-preference){
   .page:not([hidden]){animation:in .3s cubic-bezier(.2,.75,.25,1) both}

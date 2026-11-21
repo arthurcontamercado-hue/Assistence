@@ -32,24 +32,10 @@ svg{flex:none}
 .mu{color:var(--mu)}
 .num{font-variant-numeric:tabular-nums}
 
-/* ---------- carregamento ---------- */
-.boot{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:var(--bg);transition:opacity .35s var(--ease),visibility .35s}
-.boot.out{opacity:0;visibility:hidden}
-.boot-in{width:min(320px,82vw);display:grid;gap:14px;justify-items:center;text-align:center}
-.boot-logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--ac2),var(--ac));display:grid;place-items:center;color:#fff;box-shadow:0 10px 30px rgba(79,70,229,.35)}
-.boot b{font-size:16px}
-.boot-steps{display:grid;gap:8px;width:100%;margin-top:4px}
-.boot-steps li{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mu);transition:color .25s}
-.boot-steps li i{width:18px;height:18px;border-radius:50%;border:2px solid var(--bd2);display:grid;place-items:center;transition:all .25s var(--ease);flex:none}
-.boot-steps li.ok{color:var(--tx)}
-.boot-steps li.ok i{background:var(--lo);border-color:var(--lo)}
-.boot-steps li.ok i::after{content:"";width:6px;height:3px;border:2px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
-.boot-bar{width:100%;height:4px;border-radius:99px;background:var(--sf3);overflow:hidden}
-.boot-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ac2),var(--ac));border-radius:99px;transition:width .3s var(--ease)}
-
 /* ---------- elementos comuns ---------- */
 .ch{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;color:#fff;flex:none}
 .ch.gmail{background:var(--gm)}.ch.outlook{background:var(--ol)}.ch.whatsapp{background:var(--wa)}
+.ch.instagram{background:linear-gradient(135deg,#f58529,#dd2a7b 55%,#8134af)}.ch.telegram{background:#229ed9}.ch.slack{background:#4a154b}.ch.teams{background:#5059c9}.ch.sms{background:#64748b}
 .ch.sm{width:16px;height:16px;border-radius:4px}
 .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12.5px;color:#fff;flex:none;background:var(--c,#64748b)}
 .av.sm{width:22px;height:22px;font-size:10px}
@@ -215,6 +201,9 @@ mark{background:color-mix(in srgb,var(--me) 25%,transparent);color:inherit;borde
 .list-col{border-right:1px solid var(--bd);display:flex;flex-direction:column;min-height:0;background:var(--sf)}
 .list-h{padding:14px 14px 10px;display:grid;gap:10px;border-bottom:1px solid var(--bd)}
 .list-h h2{font-size:16px;display:flex;align-items:center;justify-content:space-between}
+.chrow{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -14px;padding:0 14px}
+.chrow::-webkit-scrollbar{display:none}
+.chrow .chip{flex:none}
 .chseg{display:flex;gap:4px;padding:3px;border-radius:10px;background:var(--sf2)}
 .chseg button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 4px;border-radius:8px;font-size:12px;font-weight:600;color:var(--mu);transition:background .15s,color .15s}
 .chseg button.on{background:var(--sf);color:var(--tx);box-shadow:var(--sh)}
@@ -253,7 +242,20 @@ mark{background:color-mix(in srgb,var(--me) 25%,transparent);color:inherit;borde
 .bub .au{display:block;font-size:12px;font-weight:700;color:#1fa855;margin-bottom:1px}
 .bub.out{justify-self:end;background:#d9fdd3}
 @media (prefers-color-scheme:dark){.bub{background:#202c33;color:#e9edef}.bub.out{background:#005c4b}.bub small{color:#8696a0}}
-.sent-note{font-size:11.5px;color:var(--mu);text-align:center}
+/* bate-papo dos outros canais (Instagram, Telegram, Slack, Teams, SMS) */
+.chat{border-radius:12px;padding:14px;display:grid;gap:6px;background:var(--sf2)}
+.chat .bub{background:var(--sf);color:var(--tx);box-shadow:none;border:1px solid var(--bd)}
+.chat .bub small{color:var(--mu)}
+.chat .bub .au{color:var(--ac-tx)}
+.chat .bub.out{background:var(--acs);border-color:transparent}
+.chat.instagram .bub.out{background:linear-gradient(135deg,#7b5cff,#c13584);color:#fff}
+.chat.instagram .bub.out small{color:rgba(255,255,255,.8)}
+.chat.telegram .bub.out{background:#e1f3fb}
+.chat.slack .bub,.chat.teams .bub{max-width:92%;border-radius:8px}
+.chat.slack .bub .au{color:#4a154b}.chat.teams .bub .au{color:#5059c9}
+.chat.sms .bub.out{background:#2f7df6;color:#fff;border:0}.chat.sms .bub.out small{color:rgba(255,255,255,.85)}
+.chat .att,.wa .att{margin-top:4px}
+@media (prefers-color-scheme:dark){.chat.telegram .bub.out{background:#1e3a4b}.chat.slack .bub .au{color:#d4a5d6}.chat.teams .bub .au{color:#a5abff}}
 .info-col{border-left:1px solid var(--bd);background:var(--sf);overflow:auto;min-height:0}
 .info{padding:16px;display:grid;gap:14px}
 .info h3{font-size:13px;display:flex;align-items:center;gap:7px}
@@ -331,7 +333,7 @@ mark{background:color-mix(in srgb,var(--me) 25%,transparent);color:inherit;borde
 .big{font-size:28px;font-weight:800;letter-spacing:-.02em}
 
 /* configurações */
-.conn{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.conn{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
 .conn .card{padding:16px;display:grid;gap:10px}
 .conn .ch{width:34px;height:34px;border-radius:9px}
 .st{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--me)}

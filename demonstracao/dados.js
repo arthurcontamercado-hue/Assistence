@@ -12,7 +12,7 @@
    Nos textos, {dia:+2} vira o dia da semana e {data:+2} vira a data (dd/mm).
    ===================================================================== */
 window.DEMO_DADOS = {
-  versao: 1,
+  versao: 2,
   empresa: "Estúdio Camila Rocha · Arquitetura de Interiores",
 
   equipe: [
@@ -24,7 +24,12 @@ window.DEMO_DADOS = {
   canais: [
     { id: "gmail",    nome: "Gmail",            conta: "Caixa pessoal do estúdio", cor: "#d93025" },
     { id: "outlook",  nome: "Outlook",          conta: "E-mail corporativo",       cor: "#0f6cbd" },
-    { id: "whatsapp", nome: "WhatsApp Business", conta: "Número comercial",        cor: "#1fa855" }
+    { id: "whatsapp", nome: "WhatsApp Business", conta: "Número comercial",        cor: "#1fa855" },
+    { id: "instagram", nome: "Instagram Direct", conta: "Perfil do estúdio",         cor: "#c13584" },
+    { id: "telegram", nome: "Telegram",          conta: "Grupo da obra",             cor: "#229ed9" },
+    { id: "slack",    nome: "Slack",             conta: "Espaço da equipe",          cor: "#4a154b" },
+    { id: "teams",    nome: "Microsoft Teams",   conta: "Cliente corporativo",       cor: "#5059c9" },
+    { id: "sms",      nome: "SMS",               conta: "Celular do estúdio",        cor: "#64748b" }
   ],
 
   categorias: ["Clientes", "Fornecedores", "Financeiro", "Reuniões", "Equipe", "Marketing", "Notificações"],
@@ -45,7 +50,14 @@ window.DEMO_DADOS = {
     { id: "nfse",     nome: "Sistema de Notas",      org: "Nota fiscal eletrônica",       tipo: "Serviço",     email: "nfse@example.com" },
     { id: "casabela", nome: "Loja Casa Bela",        org: "Fornecedor · tintas",          tipo: "Fornecedor",  email: "pedidos@example.com" },
     { id: "equipe",   nome: "Equipe Estúdio",        org: "Grupo interno · Rafael",       tipo: "Equipe",      email: "" },
-    { id: "horizonte", nome: "Construtora Horizonte", org: "Possível parceiro",           tipo: "Cliente",     email: "parcerias@example.com" }
+    { id: "livia",    nome: "Lívia Andrade",         org: "Nova cliente · Instagram",     tipo: "Cliente",     email: "" },
+    { id: "trama",    nome: "Ateliê Trama",          org: "Marca de tecidos",             tipo: "Fornecedor",  email: "" },
+    { id: "antonio",  nome: "Obra Vila Mariana",     org: "Grupo · Antônio, mestre de obras", tipo: "Fornecedor", email: "" },
+    { id: "slproj",   nome: "#projetos",             org: "Canal da equipe · Slack",      tipo: "Equipe",      email: "" },
+    { id: "slfin",    nome: "#financeiro",           org: "Canal da equipe · Slack",      tipo: "Equipe",      email: "" },
+    { id: "patricia", nome: "Patrícia Gomes",        org: "Escritório Paulista",          tipo: "Cliente",     email: "" },
+    { id: "energia",  nome: "Companhia de Energia",  org: "Conta de luz do estúdio",      tipo: "Serviço",     email: "" },
+    { id: "transp",   nome: "Transportadora Rápida", org: "Entregas",                     tipo: "Serviço",     email: "" }
   ],
 
   conversas: [
@@ -241,6 +253,96 @@ window.DEMO_DADOS = {
         { de: "nfse", t: { d: -2, h: "18:01" }, txt: "Nota fiscal de serviço nº 1.284 emitida com sucesso. O PDF está em anexo." }
       ] },
 
+    { id: "sl1", canal: "slack", contato: "slproj", assunto: "Planta elétrica v3 para revisão",
+      cat: "Equipe", pri: "alta", tipo: "Pedido", conf: 90, lida: false, aguardando: true, resp: "camila",
+      acao: "Revisar a planta elétrica v3 antes do envio", prazo: { d: 0, h: "14:30" }, valor: null,
+      resumo: "O Rafael subiu a versão 3 da planta elétrica do Sérgio e pede revisão antes de enviar.",
+      motivos: ["Ligada à tarefa de hoje do Sérgio", "Pedido da equipe", "Prazo para hoje"],
+      anexos: [{ nome: "planta-eletrica-v3.pdf", tipo: "pdf", tam: "1,8 MB" }], tarefas: ["t1"],
+      sugestoes: ["Vou olhar agora, Rafa.", "Revisado! Pode mandar para o Sérgio."],
+      msgs: [
+        { de: "slproj", autor: "Rafael Lima", t: { min: -40 }, txt: "Subi a versão 3 da planta elétrica do apê da Vila Mariana na pasta do projeto, já com a tomada da ilha." },
+        { de: "slproj", autor: "Rafael Lima", t: { min: -39 }, txt: "@Camila consegue revisar antes de eu mandar pro Sérgio?" }
+      ] },
+
+    { id: "tg1", canal: "telegram", contato: "antonio", assunto: "Porcelanato entregue errado",
+      cat: "Fornecedores", pri: "alta", tipo: "Pedido", conf: 91, lida: false, aguardando: true, resp: "rafael",
+      acao: "Resolver a troca do porcelanato com a loja", prazo: { d: 0, h: "17:00" }, valor: null,
+      resumo: "Chegou porcelanato 60×60 em vez de 90×90 na obra da Vila Mariana. O assentamento começa amanhã.",
+      motivos: ["Erro de entrega em obra em andamento", "Prazo para hoje", "Bloqueia o trabalho da obra"],
+      anexos: [{ nome: "foto-caixas.jpg", tipo: "img", tam: "1,2 MB" }], tarefas: ["t17"],
+      sugestoes: ["Antônio, obrigado pelo aviso! O Rafael já está falando com a loja para trocar hoje."],
+      msgs: [
+        { de: "antonio", autor: "Antônio · mestre de obras", t: { min: -55 }, txt: "Pessoal, chegou o porcelanato 60x60, mas o projeto pede 90x90." },
+        { de: "antonio", autor: "Antônio · mestre de obras", t: { min: -54 }, txt: "Mandei foto das caixas. Amanhã cedo a gente começa a assentar, consegue resolver a troca hoje?" }
+      ] },
+
+    { id: "tm1", canal: "teams", contato: "patricia", assunto: "Aprovação do mobiliário — Escritório Paulista",
+      cat: "Clientes", pri: "media", tipo: "Documento", conf: 88, lida: false, aguardando: true, resp: "camila",
+      acao: "Assinar e devolver a ficha de mobiliário", prazo: { d: 1, h: "12:00" }, valor: null,
+      resumo: "Patrícia, do Escritório Paulista, precisa da ficha de mobiliário assinada até amanhã ao meio-dia.",
+      motivos: ["Documento para assinatura", "Prazo: amanhã", "Cliente ativo"],
+      anexos: [{ nome: "ficha-mobiliario.xlsx", tipo: "doc", tam: "84 KB" }], tarefas: ["t19"],
+      sugestoes: ["Patrícia, envio assinada até amanhã cedo."],
+      msgs: [
+        { de: "patricia", autor: "Patrícia Gomes", t: { min: -150 }, txt: "Oi, Camila! O Ricardo aprovou quase tudo. Só falta a ficha de mobiliário assinada por você." },
+        { de: "patricia", autor: "Patrícia Gomes", t: { min: -149 }, txt: "Consegue me devolver até amanhã ao meio-dia? Deixei a planilha aqui." }
+      ] },
+
+    { id: "ig1", canal: "instagram", contato: "livia", assunto: "Consultoria para quarto de bebê",
+      cat: "Clientes", pri: "media", tipo: "Pergunta", conf: 83, lida: false, aguardando: true, resp: "camila",
+      acao: "Enviar os valores da consultoria online", prazo: { d: 1, h: null }, valor: null,
+      resumo: "Nova seguidora quer uma consultoria online para o quarto do bebê, que nasce em três meses.",
+      motivos: ["Novo contato com intenção de compra", "Pergunta direta", "Sem resposta há 3 horas"],
+      anexos: [], tarefas: ["t16"],
+      sugestoes: ["Oi, Lívia! Que alegria! A consultoria online sai a partir de R$ 890. Posso te mandar os detalhes?"],
+      msgs: [
+        { de: "livia", t: { min: -190 }, txt: "Oi! Amo os projetos de vocês 💛" },
+        { de: "livia", t: { min: -189 }, txt: "Vocês fazem consultoria online? Queria ajuda com o quarto do bebê, ele nasce em 3 meses." }
+      ] },
+
+    { id: "sl2", canal: "slack", contato: "slfin", assunto: "Notas fiscais pendentes do mês",
+      cat: "Financeiro", pri: "media", tipo: "Pedido", conf: 86, lida: true, aguardando: false, resp: "julia",
+      acao: "Pedir as notas fiscais da Marmoraria e da Fiorini", prazo: { d: 3, h: null }, valor: null,
+      resumo: "A Júlia avisa que faltam duas notas de fornecedores para fechar o mês com a contabilidade.",
+      motivos: ["Fechamento do mês", "Pedido da equipe"],
+      anexos: [], tarefas: ["t18"],
+      sugestoes: ["Pode pedir, Ju. Obrigada!"],
+      msgs: [
+        { de: "slfin", autor: "Júlia Martins", t: { d: -1, h: "17:20" }, txt: "Fechamento do mês: faltam as notas da Marmoraria Pedra Nobre e da Elétrica Fiorini." },
+        { de: "slfin", autor: "Júlia Martins", t: { d: -1, h: "17:21" }, txt: "Peço para eles até {dia:+3}?" }
+      ] },
+
+    { id: "sms1", canal: "sms", contato: "energia", assunto: "Conta de luz do estúdio",
+      cat: "Financeiro", pri: "media", tipo: "Cobrança", conf: 95, lida: true, aguardando: false, resp: "julia",
+      acao: "Pagar a conta de energia (R$ 386,20)", prazo: { d: 5, h: null }, valor: { v: 386.20, sentido: "pagar" },
+      resumo: "Conta de energia do estúdio com vencimento em {data:+5}.",
+      motivos: ["Conta com vencimento", "Remetente: concessionária"],
+      anexos: [], tarefas: ["t20"], sugestoes: [],
+      msgs: [
+        { de: "energia", t: { d: -1, h: "08:10" }, txt: "Sua fatura de energia de R$ 386,20 vence em {data:+5}. Pague pelo app ou com o código de barras da conta." }
+      ] },
+
+    { id: "ig2", canal: "instagram", contato: "trama", assunto: "Proposta de parceria",
+      cat: "Marketing", pri: "baixa", tipo: "Proposta", conf: 81, lida: true, aguardando: false, resp: null,
+      acao: "Avaliar a parceria quando houver tempo", prazo: null, valor: null,
+      resumo: "Marca de tecidos propõe uma parceria de conteúdo com envio de amostras.",
+      motivos: ["Proposta comercial sem prazo", "Contato de marketing"],
+      anexos: [], tarefas: [], sugestoes: ["Obrigada pelo convite! Vamos avaliar e retornamos em breve."],
+      msgs: [
+        { de: "trama", t: { d: -2, h: "13:30" }, txt: "Olá! Somos o Ateliê Trama e adoraríamos enviar nossas amostras de linho para o estúdio. Toparia uma parceria de conteúdo?" }
+      ] },
+
+    { id: "sms2", canal: "sms", contato: "transp", assunto: "Entrega agendada",
+      cat: "Notificações", pri: "baixa", tipo: "Informativo", conf: 97, lida: true, aguardando: false, resp: null,
+      acao: "Nenhuma ação necessária", prazo: null, valor: null,
+      resumo: "Aviso automático: as tintas chegam amanhã entre 8h e 12h.",
+      motivos: ["Aviso automático", "Sem pedido de ação"],
+      anexos: [], tarefas: [], sugestoes: [],
+      msgs: [
+        { de: "transp", t: { min: -380 }, txt: "Transportadora Rápida: seu pedido 48213 será entregue em {data:+1}, entre 8h e 12h." }
+      ] },
+
     { id: "g5", canal: "gmail", contato: "revista", assunto: "Tendências de cores para o próximo verão",
       cat: "Marketing", pri: "baixa", tipo: "Newsletter", conf: 99, lida: false, aguardando: false, resp: null,
       acao: "Ler quando tiver tempo", prazo: null, valor: null,
@@ -253,7 +355,7 @@ window.DEMO_DADOS = {
   ],
 
   tarefas: [
-    { id: "t1",  titulo: "Enviar a planta elétrica atualizada ao Sérgio", origens: ["w1", "w5"], prazo: { d: 0, h: "15:00" }, resp: "rafael", pri: "alta", valor: null },
+    { id: "t1",  titulo: "Enviar a planta elétrica atualizada ao Sérgio", origens: ["w1", "w5", "sl1"], prazo: { d: 0, h: "15:00" }, resp: "rafael", pri: "alta", valor: null },
     { id: "t8",  titulo: "Responder a Juliana e propor uma visita",       origens: ["w3"], prazo: { d: 0, h: null },    resp: "camila", pri: "media", valor: null },
     { id: "t6",  titulo: "Enviar opções de revestimento à Marina",        origens: ["o6"], prazo: { d: -1, h: "18:00" }, resp: "camila", pri: "alta", valor: null },
     { id: "t3",  titulo: "Enviar a proposta revisada da Casa Alphaville", origens: ["o1"], prazo: { d: 1, h: "18:00" },  resp: "camila", pri: "alta", valor: null },
@@ -266,6 +368,11 @@ window.DEMO_DADOS = {
     { id: "t12", titulo: "Pagar a fatura do cartão empresarial",          origens: ["g4"], prazo: { d: 6, h: null },     resp: "julia",  pri: "media", valor: { v: 7312.45, sentido: "pagar" } },
     { id: "t13", titulo: "Enviar a ART e o cronograma ao condomínio",     origens: ["g7"], prazo: { d: 9, h: null },     resp: "rafael", pri: "media", valor: null },
     { id: "t11", titulo: "Avisar a Marina sobre o novo prazo do sofá",    origens: ["o4"], prazo: null,                  resp: "camila", pri: "media", valor: null },
+    { id: "t17", titulo: "Resolver a troca do porcelanato com a loja",   origens: ["tg1"], prazo: { d: 0, h: "17:00" }, resp: "rafael", pri: "alta", valor: null },
+    { id: "t16", titulo: "Enviar os valores da consultoria à Lívia",      origens: ["ig1"], prazo: { d: 1, h: null },    resp: "camila", pri: "media", valor: null },
+    { id: "t19", titulo: "Assinar a ficha de mobiliário da Patrícia",     origens: ["tm1"], prazo: { d: 1, h: "12:00" }, resp: "camila", pri: "media", valor: null },
+    { id: "t18", titulo: "Pedir as notas fiscais da Marmoraria e da Fiorini", origens: ["sl2"], prazo: { d: 3, h: null }, resp: "julia", pri: "media", valor: null },
+    { id: "t20", titulo: "Pagar a conta de energia do estúdio",           origens: ["sms1"], prazo: { d: 5, h: null },   resp: "julia",  pri: "media", valor: { v: 386.20, sentido: "pagar" } },
     { id: "t14", titulo: "Enviar as medidas da cozinha à marmoraria",     origens: [],     prazo: { d: -2, h: null },    resp: "rafael", pri: "media", valor: null, feita: true }
   ],
 
@@ -279,26 +386,8 @@ window.DEMO_DADOS = {
 
   /* Números da semana anterior usados nos relatórios (fictícios) */
   relatorio: {
-    volume: { gmail: 46, outlook: 31, whatsapp: 88 },
-    resposta: { gmail: "3h10", outlook: "2h40", whatsapp: "38 min" },
+    volume: { gmail: 46, outlook: 31, whatsapp: 88, instagram: 24, telegram: 19, slack: 52, teams: 12, sms: 9 },
+    resposta: { gmail: "3h10", outlook: "2h40", whatsapp: "38 min", instagram: "5h20", telegram: "25 min", slack: "18 min", teams: "1h05", sms: "—" },
     tempoPoupado: "4h20"
-  },
-
-  /* Mensagens que chegam quando a pessoa toca em "Simular nova mensagem", sempre nesta ordem */
-  roteiro: [
-    { tipo: "junta", conversa: "w1", aviso: "Sérgio Alves mudou o prazo para as 14h",
-      msg: { de: "sergio", txt: "Camila, o eletricista chegou mais cedo. Consegue me mandar a planta até as 14h?" },
-      muda: { prazo: { d: 0, h: "14:00" }, resumo: "O eletricista chegou mais cedo: o Sérgio agora precisa da planta até as 14h.", motivos: ["Cliente com obra em andamento", "Prazo antecipado para as 14h", "Pedido explícito", "Bloqueia o trabalho de outro fornecedor"] },
-      tarefa: { id: "t1", prazo: { d: 0, h: "14:00" } } },
-    { tipo: "nova", aviso: "Nova proposta de parceria pelo Outlook",
-      conversa: { id: "o7", canal: "outlook", contato: "horizonte", assunto: "Parceria para 3 apartamentos decorados",
-        cat: "Clientes", pri: "media", tipo: "Proposta", conf: 87, lida: false, aguardando: true, resp: "camila",
-        acao: "Agendar uma conversa sobre a parceria", prazo: { d: 4, h: null }, valor: { v: 45000, sentido: "receber" },
-        resumo: "A Construtora Horizonte quer contratar a decoração de 3 apartamentos decorados, com orçamento estimado de R$ 45.000,00.",
-        motivos: ["Proposta comercial", "Valor alto", "Pede retorno até {data:+4}"],
-        anexos: [{ nome: "apresentacao-empreendimento.pdf", tipo: "pdf", tam: "5,8 MB" }], tarefas: ["t15"],
-        sugestoes: ["Olá! Obrigada pelo convite. Podemos conversar na {dia:+2} à tarde?"],
-        msgs: [{ de: "horizonte", t: { min: 0 }, txt: "Prezada Camila,\n\nEstamos lançando um empreendimento na Vila Madalena e gostaríamos de contratar o estúdio para decorar 3 apartamentos modelo. O orçamento estimado é de R$ 45.000,00.\n\nPodemos conversar até {data:+4}?\n\nAtenciosamente,\nConstrutora Horizonte" }] },
-      tarefa: { id: "t15", titulo: "Agendar conversa com a Construtora Horizonte", origens: ["o7"], prazo: { d: 4, h: null }, resp: "camila", pri: "media", valor: null } }
-  ]
+  }
 };
