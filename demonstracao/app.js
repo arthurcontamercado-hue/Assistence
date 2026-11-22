@@ -73,6 +73,7 @@ const LOGO = '<svg width="16" height="15" viewBox="0 0 26 24" fill="currentColor
 const CHI = { gmail: "mail", outlook: "mail", whatsapp: "chat", instagram: "cam", telegram: "send", slack: "hash", teams: "users", sms: "sms" };
 const EMAIL = { gmail: 1, outlook: 1 };
 const curto = id => ({ whatsapp: "WhatsApp", instagram: "Instagram", teams: "Teams" }[id] || canal(id).nome);
+const chMini = (c, s = 12) => `<span class="chm" title="${esc(canal(c).nome)}">${I(CHI[c], s, 2.1)}</span>`;
 const chIcon = (c, sm) => `<span class="ch ${c}${sm ? " sm" : ""}" title="${esc(canal(c).nome)}">${I(CHI[c], sm ? 10 : 13, 2.4)}</span>`;
 
 /* ---------------- dados de apoio ---------------- */
@@ -119,7 +120,8 @@ function kpis() {
     hoje: op.filter(t => t.prazo && t.prazo.d === 0).length,
     atrasadas: op.filter(t => t.prazo && t.prazo.d < 0).length,
     pagar: pagar.reduce((a, t) => a + t.valor.v, 0), nPagar: pagar.length,
-    naoLidas: S.conv.filter(c => !c.lida && !c.resolvida).length
+    naoLidas: S.conv.filter(c => !c.lida && !c.resolvida).length,
+    aguardando: S.conv.filter(c => c.aguardando && !c.resolvida).length
   };
 }
 
@@ -161,7 +163,7 @@ function shell() {
   if (mode === "desk") {
     app.innerHTML = `<div class="desk">
       <aside class="side" aria-label="Navegação">
-        <div class="side-top"><div class="brand"><i>${LOGO}</i>Assistence</div><span class="demo-tag" title="Esta é uma demonstração com dados fictícios. Nenhuma conta real está conectada.">${I("info", 12, 2.4)}Demo · dados fictícios</span></div>
+        <div class="side-top"><div class="brand"><i>${LOGO}</i>Assistence</div><span class="demo-tag" title="Demonstração com dados fictícios. Nenhuma conta real está conectada.">Demonstração</span></div>
         <nav class="side-scroll" id="side"></nav>
         <div class="side-foot"><button class="nav-i" data-a="go" data-v="config">${I("gear")}Configurações</button>
           <div class="me-card">${avatar("camila")}<div><b>Camila Rocha</b><small>${esc(D.empresa.split("·")[0].trim())}</small></div></div></div>
@@ -209,12 +211,11 @@ function render(soft) {
 /* ---------------- barra lateral (computador) ---------------- */
 function side() {
   const k = kpis();
-  const navs = [["painel", "Painel", "home", ""], ["caixa", "Caixa unificada", "inbox", k.naoLidas], ["prioridades", "Prioridades", "star", k.altas, true], ["tarefas", "Tarefas", "task", k.acoes], ["contas", "Contas a pagar", "money", k.nPagar], ["contatos", "Contatos", "users", ""], ["relatorios", "Relatórios", "chart", ""]];
+  const navs = [["painel", "Painel", "home", ""], ["caixa", "Caixa de entrada", "inbox", k.naoLidas], ["prioridades", "Prioridades", "star", k.altas, true], ["tarefas", "Tarefas", "task", k.acoes], ["contas", "Contas a pagar", "money", k.nPagar], ["contatos", "Contatos", "users", ""], ["relatorios", "Relatórios", "chart", ""]];
   const cur = ui.view === "busca" ? ui.prev : ui.view;
-  const chn = D.canais.map(c => { const n = S.conv.filter(x => x.canal === c.id && !x.lida && !x.resolvida).length; const on = cur === "caixa" && ui.canal === c.id && !ui.cat && !ui.contato; return `<button class="nav-i${on ? " on" : ""}" data-a="canal" data-c="${c.id}">${chIcon(c.id, true)}${esc(c.nome)}<span class="n">${n || ""}</span></button>`; }).join("");
-  const cats = D.categorias.map(cat => { const n = S.conv.filter(x => x.cat === cat && !x.resolvida).length; const on = cur === "caixa" && ui.cat === cat; return `<button class="nav-i${on ? " on" : ""}" data-a="cat" data-c="${esc(cat)}"><span class="dot" style="background:${catColor(cat)}"></span>${esc(cat)}<span class="n">${n || ""}</span></button>`; }).join("");
-  $("#side").innerHTML = navs.map(([v, l, i, n, red]) => { const on = cur === v && !(v === "caixa" && (ui.canal !== "todos" || ui.cat || ui.contato)); return `<button class="nav-i${on ? " on" : ""}" data-a="go" data-v="${v}">${I(i)}${l}${n ? `<span class="n${red ? " red" : ""}">${n}</span>` : ""}</button>`; }).join("")
-    + `<div class="side-lbl"><span>Canais</span><span title="Conexões demonstrativas">demo</span></div>${chn}<div class="side-lbl"><span>Categorias</span></div>${cats}`;
+  const cats = D.categorias.map(cat => { const n = S.conv.filter(x => x.cat === cat && !x.resolvida).length; const on = cur === "caixa" && ui.cat === cat; return `<button class="nav-i sub${on ? " on" : ""}" data-a="cat" data-c="${esc(cat)}"><span class="dot" style="background:${catColor(cat)}"></span>${esc(cat)}<span class="n">${n || ""}</span></button>`; }).join("");
+  $("#side").innerHTML = navs.map(([v, l, i, n, red]) => { const on = cur === v && !(v === "caixa" && (ui.cat || ui.contato)); return `<button class="nav-i${on ? " on" : ""}" data-a="go" data-v="${v}">${I(i)}${l}${n ? `<span class="n${red ? " red" : ""}">${n}</span>` : ""}</button>`; }).join("")
+    + `<div class="side-lbl">Categorias</div>${cats}`;
 }
 const CATC = { Clientes: "#4f46e5", Fornecedores: "#0e9f6e", Financeiro: "#dc3545", "Reuniões": "#7c3aed", Equipe: "#0891b2", Marketing: "#db2777", "Notificações": "#64748b" };
 const catColor = c => CATC[c] || "#64748b";
@@ -246,30 +247,38 @@ function resumoTxt() {
 }
 function painelDesk() {
   const k = kpis();
-  const top = S.conv.filter(c => !c.resolvida && c.pri !== "baixa").sort((a, b) => priW[a.pri] - priW[b.pri] || sortPrazo(a, b)).slice(0, 7);
-  return `<div class="pad">
-    <div class="page-h"><div><h1>${saudacao()}, Camila</h1><p>${hojeLongo()} · ${S.conv.length} conversas de ${D.canais.length} canais</p></div></div>
-    <div class="kpis">
-      ${kpi("prioridades", "star", "Prioridade alta", k.altas, "red", "conversas abertas")}
-      ${kpi("tarefas", "task", "Ações pendentes", k.acoes, "ac", "na equipe")}
-      ${kpi("tarefas", "clock", "Prazos de hoje", k.hoje, "", "tarefas vencem hoje")}
-      ${kpi("tarefas", "warn", "Atrasadas", k.atrasadas, k.atrasadas ? "red" : "", "precisam de atenção")}
-      ${kpi("contas", "money", "A pagar em 7 dias", brl(k.pagar), "", `${k.nPagar} contas`)}
+  const foco = openTasks().filter(t => t.prazo && t.prazo.d <= 0).sort(sortPrazo);
+  const atencao = S.conv.filter(c => !c.resolvida && c.pri === "alta").sort(sortPrazo).slice(0, 5);
+  const venc = openTasks().filter(t => t.valor && t.valor.sentido === "pagar").sort(sortPrazo).slice(0, 4);
+  return `<div class="pad dashp">
+    <div class="page-h"><div><h1>${saudacao()}, Camila</h1><p>${hojeLongo()}</p></div></div>
+    <div class="kpis k4">
+      ${kpi("prioridades", "Prioridade alta", k.altas, "red", "conversas abertas")}
+      ${kpi("tarefas", "Para hoje", k.hoje + k.atrasadas, k.atrasadas ? "red" : "", k.atrasadas ? `${k.atrasadas} atrasada${k.atrasadas > 1 ? "s" : ""}` : "tarefas")}
+      ${kpi("caixa", "Aguardando resposta", k.aguardando, "", "conversas", "aguardando")}
+      ${kpi("contas", "A pagar em 7 dias", brl(k.pagar), "", `${k.nPagar} contas`)}
     </div>
     <div class="dash">
-      <div class="card"><div class="sec-h"><h3>${I("star", 15)}Mais importantes agora</h3><button class="link" data-a="go" data-v="prioridades">Ver todas</button></div>
-        <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Remetente</th><th>Ação</th><th>Prazo</th><th>Valor</th><th></th></tr></thead><tbody>
-        ${top.map(c => `<tr data-a="open" data-id="${c.id}"><td><div class="who">${chIcon(c.canal, true)}<span class="dot ${PRI[c.pri][0]}"></span><div style="min-width:0"><b>${esc(contato(c.contato).nome)}</b><small>${esc(c.cat)}</small></div></div></td>
-          <td class="act">${esc(fill(c.acao))}</td><td><span class="pill ${prazoCls(c.prazo)}">${prazoTxt(c.prazo)}</span></td><td class="val">${c.valor ? brl(c.valor.v) : "—"}</td><td>${avatar(c.resp, "sm")}</td></tr>`).join("")}
-        </tbody></table></div></div>
-      <div style="display:grid;gap:16px">
-        <div class="card resume"><h3>${I("spark", 15)}Resumo do dia</h3><p>${resumoTxt()}</p></div>
-        <div class="card"><div class="sec-h"><h3>${I("clock", 15)}Esta semana</h3><button class="link" data-a="go" data-v="tarefas">Quadro</button></div>${semana()}</div>
-        <div class="card"><div class="sec-h"><h3>${I("layers", 15)}Conversas por canal</h3></div>${porCanal()}</div>
+      <div class="dcol">
+        <section class="card"><div class="sec-h"><h3>Foco de hoje</h3><span class="mu num">${foco.length} ${foco.length === 1 ? "tarefa" : "tarefas"}</span></div>
+          <div class="flist">${foco.length ? foco.map(focoRow).join("") : '<div class="empty">Tudo em dia. Nada vence hoje.</div>'}</div></section>
+        <section class="card"><div class="sec-h"><h3>Pedem sua atenção</h3><button class="link" data-a="go" data-v="prioridades">Ver todas</button></div>
+          <div class="clist">${atencao.map(row).join("")}</div></section>
+      </div>
+      <div class="dcol">
+        <section class="card resume"><h3>Resumo do dia</h3><p>${resumoTxt()}</p></section>
+        <section class="card"><div class="sec-h"><h3>Esta semana</h3><button class="link" data-a="go" data-v="tarefas">Quadro</button></div>${semana()}</section>
+        <section class="card"><div class="sec-h"><h3>Próximos vencimentos</h3><button class="link" data-a="go" data-v="contas">Contas</button></div>
+          <div class="vlist">${venc.map(t => `<div class="vrow" data-tid="${t.id}"><div style="min-width:0"><b>${esc(t.titulo.replace(/^Pagar (a |o )?/i, "").replace(/^./, m => m.toUpperCase()))}</b><small class="${prazoCls(t.prazo)}">${prazoTxt(t.prazo, true)}</small></div><span class="amt num">${brl(t.valor.v)}</span><button class="mini" data-a="ttoggle" data-id="${t.id}" title="Marcar como paga" aria-label="Marcar como paga">${I("check", 14, 2.6)}</button></div>`).join("")}</div></section>
       </div>
     </div></div>`;
 }
-const kpi = (v, i, l, n, cls, sub) => `<button class="card kpi" data-a="go" data-v="${v}"><span>${I(i, 14)}${l}</span><b class="${cls}">${n}</b><small>${sub}</small></button>`;
+function focoRow(t) {
+  const o = t.origens.map(C).filter(Boolean)[0];
+  return `<div class="frow-t${t.pri === "alta" ? " hot" : ""}" data-tid="${t.id}"><button class="check" data-a="ttoggle" data-id="${t.id}" aria-label="Concluir tarefa"></button>
+    <button class="ft" ${o ? `data-a="open" data-id="${o.id}"` : ""}><b>${esc(t.titulo)}</b><small>${o ? `${chMini(o.canal)}${esc(contato(o.contato).nome)} · ` : ""}<span class="${prazoCls(t.prazo)}">${prazoTxt(t.prazo, true)}</span>${t.valor ? ` · ${brl(t.valor.v)}` : ""}</small></button>${avatar(t.resp, "sm")}</div>`;
+}
+function kpi(v, l, n, cls, sub, filtro) { return `<button class="card kpi" data-a="go" data-v="${v}"${filtro ? ` data-f="${filtro}"` : ""}><span>${l}</span><b class="${cls}">${n}</b><small>${sub}</small></button>`; }
 function semana() {
   const op = openTasks();
   let h = '<ul class="week">';
@@ -280,88 +289,88 @@ function semana() {
   }
   return h + "</ul>";
 }
-function porCanal() {
-  const tot = S.conv.length;
-  return `<div class="chbar">${D.canais.map(c => { const n = S.conv.filter(x => x.canal === c.id).length; return `<div><span class="lbl">${chIcon(c.id, true)}${esc(curto(c.id))}</span><span class="b"><i style="width:${Math.round(n / tot * 100)}%;background:${c.cor}"></i></span><b class="num">${n}</b></div>`; }).join("")}</div>`;
-}
-
 /* caixa unificada / prioridades */
 function inbox(forPri) {
   const l = convList(forPri);
-  if (ui.sel && !l.find(c => c.id === ui.sel) && !C(ui.sel)) ui.sel = null;
+  if (ui.sel && !C(ui.sel)) ui.sel = null;
   const sel = ui.sel ? C(ui.sel) : null;
-  const filt = [["todas", "Todas"], ["naolidas", "Não lidas"], ["prioritarias", "Prioritárias"], ["aguardando", "Aguardando resposta"], ["anexo", "Com anexo"], ["resolvidas", "Resolvidas"]];
-  const extra = ui.cat ? `<button class="chip on" data-a="clearf" title="Remover filtro">${esc(ui.cat)} ${I("x", 12)}</button>` : ui.contato ? `<button class="chip on" data-a="clearf" title="Remover filtro">${esc(contato(ui.contato).nome)} ${I("x", 12)}</button>` : "";
+  const tabs = [["todas", "Todas"], ["naolidas", "Não lidas"], ["aguardando", "Aguardando"], ["resolvidas", "Resolvidas"]];
+  const extra = ui.cat ? `<button class="fchip" data-a="clearf" title="Remover filtro">${esc(ui.cat)} ${I("x", 12)}</button>` : ui.contato ? `<button class="fchip" data-a="clearf" title="Remover filtro">${esc(contato(ui.contato).nome)} ${I("x", 12)}</button>` : "";
   return `<div class="inbox${sel ? " with-info" : ""}">
     <div class="list-col">
-      <div class="list-h"><h2>${forPri ? "Prioridades" : "Caixa unificada"} <span class="mu num" style="font-size:13px;font-weight:500">${l.length} conversas</span></h2>
-        ${chSeg()}
-        ${forPri ? `<p class="mu" style="font-size:12.5px">Conversas de prioridade alta, da mais urgente para a menos urgente.</p>${extra ? `<div class="chips">${extra}</div>` : ""}` : `<div class="chips">${extra}${filt.map(([k, t]) => `<button class="chip${ui.filtro === k ? " on" : ""}" data-a="filtro" data-f="${k}">${t}</button>`).join("")}</div>`}
+      <div class="list-h"><div class="lh1"><h2>${forPri ? "Prioridades" : "Caixa de entrada"}</h2>${canalSel()}</div>
+        ${forPri ? `<p class="mu sm">Da mais urgente para a menos urgente.</p>` : `<div class="tabs" role="tablist">${tabs.map(([k, t]) => `<button role="tab" aria-selected="${ui.filtro === k}" class="${ui.filtro === k ? "on" : ""}" data-a="filtro" data-f="${k}">${t}</button>`).join("")}</div>`}
+        ${extra ? `<div>${extra}</div>` : ""}
       </div>
-      <div class="list" id="list" role="listbox" aria-label="Conversas">${l.length ? l.map(c => row(c)).join("") : `<div class="empty">Nenhuma conversa neste filtro.</div>`}</div>
+      <div class="list" id="list" role="listbox" aria-label="Conversas">${l.length ? l.map(row).join("") : `<div class="empty">Nenhuma conversa aqui.</div>`}</div>
     </div>
-    <div class="read-col">${sel ? reading(sel) : `<div class="blank"><div>${I("inbox", 44, 1.5)}<b style="display:block;color:var(--tx);margin-bottom:4px">Selecione uma conversa</b>Use <span class="kbd">↑</span> <span class="kbd">↓</span> para navegar e <span class="kbd">/</span> para buscar.</div></div>`}</div>
+    <div class="read-col">${sel ? reading(sel) : `<div class="blank"><div>${I("inbox", 40, 1.4)}<b>Selecione uma conversa</b><span>Use <span class="kbd">↑</span> <span class="kbd">↓</span> para navegar e <span class="kbd">/</span> para buscar.</span></div></div>`}</div>
     ${sel ? `<aside class="info-col p-in" aria-label="Informações identificadas">${infoPanel(sel)}</aside>` : ""}
   </div>`;
 }
-function chSeg() {
-  const opts = [["todos", "Todos os canais", ""]].concat(D.canais.map(c => [c.id, curto(c.id), chIcon(c.id, true)]));
-  return `<div class="chrow" role="tablist" aria-label="Canal">${opts.map(([k, t, ic]) => `<button role="tab" aria-selected="${ui.canal === k}" class="chip${ui.canal === k ? " on" : ""}" data-a="canal" data-c="${k}">${ic}${t}</button>`).join("")}</div>`;
+function canalSel() {
+  return `<label class="csel" title="Filtrar por canal">${ui.canal !== "todos" ? chMini(ui.canal) : I("layers", 13)}<select data-a="canalsel" aria-label="Canal"><option value="todos">Todos os canais</option>${D.canais.map(c => `<option value="${c.id}"${ui.canal === c.id ? " selected" : ""}>${esc(c.nome)}</option>`).join("")}</select>${I("arrow", 12)}</label>`;
 }
+function chSeg() { return canalSel(); }
 function rowTags(c) {
   const t = [];
-  if (!c.resolvida) t.push(priPill(c.pri));
-  t.push(`<span class="pill">${esc(c.cat)}</span>`);
-  if (c.prazo && !c.resolvida) t.push(`<span class="pill ${prazoCls(c.prazo)}">${I("clock", 11, 2.4)}${prazoTxt(c.prazo)}</span>`);
-  if (c.valor) t.push(valPill(c.valor));
-  if (c.anexos.length) t.push(`<span class="pill">${I("clip", 11, 2.4)}${c.anexos.length}</span>`);
-  return t.join("");
+  if (c.prazo && !c.resolvida) t.push(`<span class="${prazoCls(c.prazo) || "mu"}">${prazoTxt(c.prazo)}</span>`);
+  if (c.valor) t.push(`<span class="num ${c.valor.sentido === "receber" ? "rec-t" : ""}">${c.valor.sentido === "receber" ? "+ " : ""}${brl(c.valor.v)}</span>`);
+  if (c.anexos.length) t.push(`<span class="mu">${I("clip", 11, 2.4)}</span>`);
+  return t.join('<span class="sep">·</span>');
 }
 function row(c) {
   const lm = c.msgs[c.msgs.length - 1];
-  return `<button class="row${c.id === ui.sel ? " sel" : ""}${!c.lida ? " unread" : ""}${c.resolvida ? " done" : ""}${c._new ? " row-new" : ""}" role="option" aria-selected="${c.id === ui.sel}" data-a="open" data-id="${c.id}">${chIcon(c.canal)}
-    <span class="l1"><b>${esc(contato(c.contato).nome)}</b><time>${when(last(c))}</time></span>
-    <span class="l2"><b style="font-weight:600;color:var(--tx)">${esc(fill(c.assunto))}</b> · ${esc(fill(lm.txt).replace(/\n+/g, " "))}</span>
-    <span class="l3">${rowTags(c)}</span></button>`;
+  const tags = rowTags(c);
+  return `<div class="row p-${c.pri}${c.id === ui.sel ? " sel" : ""}${!c.lida ? " unread" : ""}${c.resolvida ? " done" : ""}" role="option" aria-selected="${c.id === ui.sel}" data-a="open" data-id="${c.id}" tabindex="-1">
+    <span class="l1"><b>${esc(contato(c.contato).nome)}</b>${chMini(c.canal)}<time>${when(last(c))}</time></span>
+    <span class="l2">${esc(fill(c.assunto))}</span>
+    <span class="l2b">${esc(fill(c.acao) !== "Nenhuma ação necessária" ? fill(c.acao) : fill(lm.txt).replace(/\n+/g, " "))}</span>
+    ${tags ? `<span class="l3">${tags}</span>` : ""}
+    <span class="qa">${c.resolvida ? "" : `<button class="mini" data-a="resolve" data-id="${c.id}" title="Resolver" aria-label="Resolver">${I("check", 14, 2.6)}</button>`}<button class="mini" data-a="assign" data-id="${c.id}" title="Atribuir" aria-label="Atribuir">${avatar(c.resp, "xs")}</button></span>
+  </div>`;
 }
 function thread(c) {
   if (!EMAIL[c.canal]) {
-    return `<div class="${c.canal === "whatsapp" ? "wa" : "chat " + c.canal}">${c.msgs.map(m => { const out = m.de === "voce"; return `<div class="bub${out ? " out" : ""}">${m.autor && !out ? `<span class="au">${esc(m.autor)}</span>` : ""}${esc(fill(m.txt))}<small>${hm(m.ts)}${out && c.canal === "whatsapp" ? " ✓✓" : ""}</small></div>`; }).join("")}${c.anexos.length ? attach(c) : ""}</div>`;
+    return `<div class="chat">${c.msgs.map(m => { const out = m.de === "voce"; return `<div class="bub${out ? " out" : ""}">${m.autor && !out ? `<span class="au">${esc(m.autor)}</span>` : ""}${esc(fill(m.txt))}<small>${hm(m.ts)}${out && c.canal === "whatsapp" ? " ✓✓" : ""}</small></div>`; }).join("")}${c.anexos.length ? attach(c) : ""}</div>`;
   }
   return c.msgs.map((m, i) => { const out = m.de === "voce"; const who = out ? "Você" : contato(m.de).nome; return `<article class="mail${out ? " out" : ""}"><div class="mh">${out ? avatar("camila", "sm") : cAvatar(m.de, "sm")}<b>${esc(who)}</b>${!out && contato(m.de).email ? `<span class="mu">&lt;${esc(contato(m.de).email)}&gt;</span>` : ""}<time>${when(m.ts) === hm(m.ts) ? "Hoje, " + hm(m.ts) : when(m.ts) + ", " + hm(m.ts)}</time></div><p>${esc(fill(m.txt))}</p>${i === c.msgs.length - 1 && !out && c.anexos.length ? attach(c) : ""}</article>`; }).join("");
 }
 const attach = c => `<div class="att">${c.anexos.map(a => `<span class="${a.tipo}">${I(a.tipo === "boleto" ? "barcode" : "file", 14)}${esc(a.nome)} <span class="mu">${esc(a.tam)}</span></span>`).join("")}</div>`;
 function reading(c) {
-  const ct = contato(c.contato); const ts = tasksOf(c); const tk = ts.find(t => !t.feita);
-  return `<div class="read-h p-in"><div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><h2>${esc(fill(c.assunto))}</h2><button class="icb" data-a="close" aria-label="Fechar conversa (Esc)">${I("x", 18)}</button></div>
-    <div class="from">${cAvatar(c.contato, "sm")}<b>${esc(ct.nome)}</b><span class="mu">${esc(ct.org)}</span><span class="pill">${chIcon(c.canal, true)}via ${esc(canal(c.canal).nome)}</span></div>
+  const ct = contato(c.contato); const tk = tasksOf(c).find(t => !t.feita);
+  return `<div class="read-h p-in"><div class="rh1"><h2>${esc(fill(c.assunto))}</h2>
+      <button class="icb" data-a="resolve" data-id="${c.id}" title="${c.resolvida ? "Reabrir" : "Resolver"}" aria-label="${c.resolvida ? "Reabrir" : "Resolver"}">${I(c.resolvida ? "reset" : "check", 17, 2.2)}</button>
+      <button class="icb" data-a="close" aria-label="Fechar (Esc)" title="Fechar (Esc)">${I("x", 17)}</button></div>
+    <div class="rh2"><div class="from">${cAvatar(c.contato, "sm")}<b>${esc(ct.nome)}</b><span class="via">${chMini(c.canal)}${esc(canal(c.canal).nome)}</span></div>
     <div class="read-tools">
-      ${c.sugestoes.length || c.canal ? `<button class="btn" data-a="reply" data-id="${c.id}">${I("reply", 15)}Responder</button>` : ""}
-      ${tk ? `<button class="btn sec" data-a="topen" data-id="${tk.id}">${I("task", 15)}Ver tarefa</button>` : `<button class="btn sec" data-a="mktask" data-id="${c.id}">${I("plus", 15)}Criar tarefa</button>`}
-      <button class="btn sec" data-a="assign" data-id="${c.id}">${avatar(c.resp, "xs")}${c.resp ? esc(membro(c.resp).nome.split(" ")[0]) : "Atribuir"}</button>
-      <button class="btn ${c.resolvida ? "sec" : "ghost"}" data-a="resolve" data-id="${c.id}">${I("check", 15)}${c.resolvida ? "Reabrir" : "Resolver"}</button>
-    </div></div>
-    <div class="thread" id="thread"><details class="info-inline"${ui.infoInline === false ? "" : " open"}><summary>${I("spark", 15)}Informações identificadas<span class="mu" style="font-weight:500;margin-left:auto">${PRI[c.pri][1]} · ${esc(c.cat)}${c.prazo ? " · " + prazoTxt(c.prazo) : ""}</span></summary>${infoPanel(c)}</details>${thread(c)}</div>`;
+      ${tk ? `<button class="btn sec" data-a="ttoggle" data-id="${tk.id}" title="${esc(tk.titulo)}">${I("check", 15, 2.4)}Concluir tarefa</button>` : `<button class="btn sec" data-a="mktask" data-id="${c.id}">${I("plus", 15)}Criar tarefa</button>`}
+      <button class="btn sec" data-a="assign" data-id="${c.id}" title="Responsável">${avatar(c.resp, "xs")}${c.resp ? esc(membro(c.resp).nome.split(" ")[0]) : "Atribuir"}</button>
+    </div></div></div>
+    <div class="thread" id="thread"><details class="info-inline"${ui.infoInline === false ? "" : " open"}><summary>Informações identificadas<span class="mu">${PRI[c.pri][1]} · ${esc(c.cat)}${c.prazo ? " · " + prazoTxt(c.prazo) : ""}</span></summary>${infoPanel(c)}</details>${thread(c)}</div>
+    ${composer(c)}`;
+}
+function composer(c) {
+  return `<div class="compose">${c.sugestoes.length ? `<div class="sugrow">${c.sugestoes.map((s, i) => `<button class="sug" data-a="usesug" data-id="${c.id}" data-i="${i}">${esc(fill(s))}</button>`).join("")}</div>` : ""}
+    <div class="cbox"><textarea id="rtxt" rows="1" placeholder="Responder pelo ${esc(canal(c.canal).nome)}…" aria-label="Escreva sua resposta"></textarea><button class="btn" data-a="send" data-id="${c.id}" aria-label="Enviar">${I("send", 15)}</button></div></div>`;
 }
 function infoPanel(c) {
   const ts = tasksOf(c);
-  const dup = ts.find(t => t.origens.length > 1);
+  const outras = [...new Set(ts.flatMap(t => t.origens).filter(o => o !== c.id))].map(C).filter(Boolean);
+  const tk = ts.find(t => !t.feita);
   return `<div class="info">
-    <h3 class="info-title">${I("spark", 15)}Informações identificadas</h3>
     <p class="sum">${esc(fill(c.resumo))}</p>
+    ${fill(c.acao) !== "Nenhuma ação necessária" ? `<div class="next"><span>Próximo passo</span><b>${esc(fill(c.acao))}</b>${tk ? `<small class="${prazoCls(tk.prazo)}">${prazoTxt(tk.prazo, true)} · ${tk.resp ? esc(membro(tk.resp).nome.split(" ")[0]) : "sem responsável"}</small>` : `<button class="link" data-a="mktask" data-id="${c.id}">Criar tarefa</button>`}</div>` : ""}
     <div class="facts">
+      ${fact("Prioridade", `<span class="pv"><span class="dot ${PRI[c.pri][0]}"></span>${PRI[c.pri][1]}</span>`, "pri", c)}
+      ${fact("Categoria", esc(c.cat), "cat", c)}
       ${fact("Tipo", esc(c.tipo), "tipo", c)}
-      ${fact("Prioridade", priPill(c.pri), "pri", c)}
-      ${fact("Categoria", `<span class="pill" style="color:${catColor(c.cat)}">${esc(c.cat)}</span>`, "cat", c)}
-      ${fact("Prazo", c.prazo ? `<span class="pill ${prazoCls(c.prazo)}">${prazoTxt(c.prazo, true)}</span>` : '<span class="mu">Sem prazo</span>', "prazo", c)}
-      ${fact("Valor", c.valor ? valPill(c.valor) : '<span class="mu">—</span>', null, c)}
-      ${fact("Ação sugerida", `<b>${esc(fill(c.acao))}</b>`, null, c)}
-      ${fact("Responsável", c.resp ? `<span style="display:inline-flex;gap:6px;align-items:center">${avatar(c.resp, "xs")}${esc(membro(c.resp).nome)}</span>` : '<span class="mu">Ninguém</span>', "resp", c)}
-      <div class="fact"><span>Confiança</span><span class="conf"><span class="b"><i style="width:${c.conf}%"></i></span><b class="num">${c.conf}%</b></span><span></span></div>
+      ${fact("Prazo", c.prazo ? `<span class="${prazoCls(c.prazo)}">${prazoTxt(c.prazo, true)}</span>` : '<span class="mu">Sem prazo</span>', "prazo", c)}
+      ${c.valor ? fact("Valor", `<span class="num${c.valor.sentido === "receber" ? " rec-t" : ""}">${c.valor.sentido === "receber" ? "A receber " : "A pagar "}${brl(c.valor.v)}</span>`, null, c) : ""}
+      ${fact("Responsável", c.resp ? `<span class="pv">${avatar(c.resp, "xs")}${esc(membro(c.resp).nome)}</span>` : '<span class="mu">Ninguém</span>', "resp", c)}
     </div>
-    <details class="why"><summary>Por que essa classificação?</summary><ul>${c.motivos.map(m => `<li>${esc(fill(m))}</li>`).join("")}</ul></details>
-    ${ts.length ? `<div class="linked"><h3>${I("task", 15)}Tarefas desta conversa</h3>${ts.map(t => `<button data-a="topen" data-id="${t.id}"><span class="check${t.feita ? " on" : ""}">${t.feita ? I("check", 12, 3) : ""}</span><span style="flex:1;min-width:0">${esc(t.titulo)}<small class="mu" style="display:block">${prazoTxt(t.prazo)}${t.origens.length > 1 ? ` · pedida em ${t.origens.length} conversas` : ""}</small></span></button>`).join("")}</div>` : ""}
-    ${dup ? `<p class="note">${I("layers", 14)}<span>${dup.valor ? "Esta conta" : "Este pedido"} também aparece em ${dup.origens.filter(o => o !== c.id).map(o => `${esc(contato(C(o).contato).nome)} (${esc(canal(C(o).canal).nome.replace(" Business", ""))})`).join(", ")}. O Assistence juntou tudo em uma tarefa só.</span></p>` : ""}
+    <details class="why"><summary>Por que essa classificação?<span class="mu num">${c.conf}%</span></summary><ul>${c.motivos.map(m => `<li>${esc(fill(m))}</li>`).join("")}</ul></details>
+    ${outras.length ? `<div class="also"><span>Também nesta tarefa</span>${outras.map(o => `<button data-a="open" data-id="${o.id}">${chMini(o.canal)}${esc(contato(o.contato).nome)}</button>`).join("")}</div>` : ""}
   </div>`;
 }
 const fact = (l, v, f, c) => `<div class="fact"><span>${l}</span><span>${v}</span>${f ? `<button class="edit" data-a="edit" data-id="${c.id}" data-f="${f}" aria-label="Corrigir ${l.toLowerCase()}" title="Corrigir">${I("edit", 13)}</button>` : "<span></span>"}</div>`;
@@ -370,19 +379,18 @@ const fact = (l, v, f, c) => `<div class="fact"><span>${l}</span><span>${v}</spa
 const COLS = [["atrasadas", "Atrasadas"], ["hoje", "Hoje"], ["semana", "Próximos 7 dias"], ["depois", "Depois"], ["sem", "Sem prazo"]];
 function tasksFiltered() { let l = S.tasks.slice(); if (ui.tview === "minhas") l = l.filter(t => t.resp === "camila"); return l; }
 function tkCard(t) {
-  const o = t.origens.map(C).filter(Boolean);
-  return `<div class="tk${t.feita ? " done" : ""}" data-tid="${t.id}"><div class="t1"><button class="check${t.feita ? " on" : ""}" data-a="ttoggle" data-id="${t.id}" aria-label="${t.feita ? "Reabrir" : "Concluir"} tarefa">${t.feita ? I("check", 12, 3) : ""}</button><b>${esc(t.titulo)}</b></div>
-    <div class="t2">${priPill(t.pri)}${t.prazo ? `<span class="pill ${prazoCls(t.prazo)}">${prazoTxt(t.prazo)}</span>` : ""}${t.valor ? valPill(t.valor) : ""}</div>
-    <div class="t2">${o.length ? o.map(c => `<button class="orig" data-a="open" data-id="${c.id}" title="Abrir conversa de origem">${chIcon(c.canal, true)}${esc(contato(c.contato).nome.split(" ")[0])}</button>`).join("") : '<span>Criada manualmente</span>'}${avatar(t.resp, "xs")}</div></div>`;
+  const o = t.origens.map(C).filter(Boolean)[0];
+  return `<div class="tk${t.feita ? " done" : ""}${t.pri === "alta" ? " hot" : ""}" data-tid="${t.id}"${!t.feita && mode === "desk" ? ' draggable="true"' : ""}><div class="t1"><button class="check${t.feita ? " on" : ""}" data-a="ttoggle" data-id="${t.id}" aria-label="${t.feita ? "Reabrir" : "Concluir"} tarefa">${t.feita ? I("check", 12, 3) : ""}</button><b>${esc(t.titulo)}</b></div>
+    <div class="t2">${o ? `<button class="orig" data-a="open" data-id="${o.id}" title="Abrir conversa">${chMini(o.canal)}${esc(contato(o.contato).nome)}</button>` : '<span>Criada por você</span>'}${avatar(t.resp, "xs")}</div>
+    ${t.prazo || t.valor ? `<div class="t3">${t.prazo ? `<span class="${prazoCls(t.prazo)}">${prazoTxt(t.prazo)}</span>` : ""}${t.valor ? `<span class="num${t.valor.sentido === "receber" ? " rec-t" : ""}">${t.valor.sentido === "receber" ? "+ " : ""}${brl(t.valor.v)}</span>` : ""}</div>` : ""}</div>`;
 }
 function tarefasDesk() {
   const l = tasksFiltered(); const op = l.filter(t => !t.feita); const done = l.filter(t => t.feita);
-  return `<div class="pad"><div class="page-h"><div><h1>Tarefas</h1><p>Encontradas nas mensagens dos três canais e organizadas por prazo.</p></div>
-    <div style="display:flex;gap:8px;align-items:center"><div class="seg">${[["equipe", "Toda a equipe"], ["minhas", "Minhas"]].map(([k, t]) => `<button class="${ui.tview === k ? "on" : ""}" data-a="tview" data-k="${k}">${t}</button>`).join("")}</div><button class="btn" data-a="newtask">${I("plus", 15)}Nova tarefa</button></div></div>
-    <div class="board">${COLS.map(([k, t]) => { const its = op.filter(x => bucket(x) === k).sort(sortPrazo); return `<section class="col${k === "atrasadas" ? " late" : ""}"><div class="col-h">${t}<span class="n">${its.length}</span></div>${its.length ? its.map(tkCard).join("") : '<div class="empty" style="padding:14px 6px">Nada aqui</div>'}</section>`; }).join("")}</div>
-    ${done.length ? `<details class="card why" style="box-shadow:none"><summary>Concluídas (${done.length})</summary><div style="display:grid;gap:8px;padding:0 12px 12px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))">${done.map(tkCard).join("")}</div></details>` : ""}</div>`;
+  return `<div class="pad"><div class="page-h"><div><h1>Tarefas</h1><p>Arraste um cartão para mudar o prazo.</p></div>
+    <div style="display:flex;gap:8px;align-items:center"><div class="seg">${[["equipe", "Equipe"], ["minhas", "Minhas"]].map(([k, t]) => `<button class="${ui.tview === k ? "on" : ""}" data-a="tview" data-k="${k}">${t}</button>`).join("")}</div><button class="btn" data-a="newtask">${I("plus", 15)}Nova tarefa</button></div></div>
+    <div class="board">${COLS.map(([k, t]) => { const its = op.filter(x => bucket(x) === k).sort(sortPrazo); return `<section class="col${k === "atrasadas" ? " late" : ""}" data-col="${k}"><div class="col-h">${t}<span class="n">${its.length}</span></div>${its.map(tkCard).join("")}${its.length ? "" : '<div class="col-empty">Solte aqui</div>'}</section>`; }).join("")}</div>
+    ${done.length ? `<details class="donebox"><summary>Concluídas <span class="mu">${done.length}</span></summary><div class="dgrid">${done.map(tkCard).join("")}</div></details>` : ""}</div>`;
 }
-
 /* contas a pagar */
 function contas() { return S.tasks.filter(t => t.valor).sort((a, b) => (a.feita - b.feita) || sortPrazo(a, b)); }
 function contasView() {
@@ -416,25 +424,26 @@ function relatoriosView() {
   const R = D.relatorio; const maxV = Math.max.apply(null, Object.values(R.volume));
   const porResp = D.equipe.concat([{ id: null, nome: "Sem responsável" }]).map(m => ({ m, n: openTasks().filter(t => t.resp === m.id).length }));
   const maxR = Math.max(1, ...porResp.map(x => x.n));
-  const cats = D.categorias.map(c => ({ c, n: S.conv.filter(x => x.cat === c).length })); const maxC = Math.max(...cats.map(x => x.n));
-  return `<div class="page-h"><div><h1>Relatórios</h1><p>Visão da equipe na última semana.</p></div></div>
+  const cats = D.categorias.map(c => ({ c, n: S.conv.filter(x => x.cat === c).length })).sort((a, b) => b.n - a.n); const maxC = Math.max(...cats.map(x => x.n));
+  const tot = Object.values(R.volume).reduce((a, b) => a + b, 0);
+  const chs = D.canais.slice().sort((a, b) => R.volume[b.id] - R.volume[a.id]);
+  return `<div class="page-h"><div><h1>Relatórios</h1><p>Últimos 7 dias.</p></div></div>
+    <div class="kpis k3"><div class="card kpi st"><span>Mensagens organizadas</span><b>${tot}</b><small>na semana</small></div><div class="card kpi st"><span>Tempo poupado</span><b>${R.tempoPoupado}</b><small>com a triagem automática</small></div><div class="card kpi st"><span>Correções feitas por você</span><b>${S.correcoes}</b><small>a classificação aprende com elas</small></div></div>
     <div class="rep">
-      <div class="card"><div class="sec-h"><h3>${I("layers", 15)}Mensagens recebidas por canal</h3><span class="mu" style="font-size:12px">últimos 7 dias</span></div><div class="bars">${D.canais.map(c => `<div><span style="display:flex;gap:7px;align-items:center">${chIcon(c.id, true)}${esc(curto(c.id))}</span><span class="b"><i style="width:${R.volume[c.id] / maxV * 100}%;background:${c.cor}"></i></span><b>${R.volume[c.id]}</b></div>`).join("")}</div></div>
-      <div class="card"><div class="sec-h"><h3>${I("clock", 15)}Tempo médio de resposta</h3></div><div class="bars">${D.canais.map(c => `<div><span style="display:flex;gap:7px;align-items:center">${chIcon(c.id, true)}${esc(curto(c.id))}</span><span></span><b style="text-align:left;white-space:nowrap">${R.resposta[c.id]}</b></div>`).join("")}<div style="grid-template-columns:1fr;border-top:1px solid var(--bd);padding-top:12px"><span class="mu">Tempo poupado com a triagem automática: <b style="color:var(--tx)">${R.tempoPoupado}</b> na semana</span></div></div></div>
-      <div class="card"><div class="sec-h"><h3>${I("users", 15)}Pendências por pessoa</h3><span class="mu" style="font-size:12px">agora</span></div><div class="bars">${porResp.map(x => `<div><span style="display:flex;gap:7px;align-items:center">${avatar(x.m.id, "xs")}${esc(x.m.nome.split(" ")[0])}</span><span class="b"><i style="width:${x.n / maxR * 100}%"></i></span><b>${x.n}</b></div>`).join("")}</div></div>
-      <div class="card"><div class="sec-h"><h3>${I("layers", 15)}Conversas por categoria</h3><span class="mu" style="font-size:12px">agora</span></div><div class="bars">${cats.map(x => `<div><span>${esc(x.c)}</span><span class="b"><i style="width:${x.n / maxC * 100}%;background:${catColor(x.c)}"></i></span><b>${x.n}</b></div>`).join("")}</div></div>
+      <div class="card"><div class="sec-h"><h3>Pendências por pessoa</h3><span class="mu sm">agora</span></div><div class="bars">${porResp.map(x => `<div><span style="display:flex;gap:7px;align-items:center">${avatar(x.m.id, "xs")}${esc(x.m.nome.split(" ")[0])}</span><span class="b"><i style="width:${x.n / maxR * 100}%"></i></span><b>${x.n}</b></div>`).join("")}</div></div>
+      <div class="card"><div class="sec-h"><h3>Conversas por categoria</h3><span class="mu sm">agora</span></div><div class="bars">${cats.map(x => `<div><span>${esc(x.c)}</span><span class="b"><i style="width:${x.n / maxC * 100}%"></i></span><b>${x.n}</b></div>`).join("")}</div></div>
+      <div class="card span2"><div class="sec-h"><h3>Por conta conectada</h3><span class="mu sm">mensagens · tempo médio de resposta</span></div><div class="bars b3">${chs.map(c => `<div><span style="display:flex;gap:7px;align-items:center">${chMini(c.id)}${esc(c.nome)}</span><span class="b"><i style="width:${R.volume[c.id] / maxV * 100}%"></i></span><b>${R.volume[c.id]}</b><span class="mu num">${R.resposta[c.id]}</span></div>`).join("")}</div></div>
     </div>`;
 }
 
 /* configurações */
 function configView() {
-  return `<div class="page-h"><div><h1>Configurações</h1><p>Canais conectados, regras e notificações.</p></div></div>
-    <div class="conn">${D.canais.map(c => `<div class="card">${chIcon(c.id)}<div><b>${esc(c.nome)}</b><div class="mu" style="font-size:12.5px">${esc(c.conta)}</div></div><span class="st"><i></i>Demonstrativo</span><span class="mu" style="font-size:12.5px">${S.conv.filter(x => x.canal === c.id).length} conversas</span></div>`).join("")}</div>
-    <div class="card"><div class="sec-h"><h3>${I("layers", 15)}Regras de organização</h3></div>${S.regras.map(r => `<div class="rule"><span style="flex:1">${esc(r.nome)}</span><button class="sw" role="switch" aria-checked="${r.ativa}" aria-label="${esc(r.nome)}" data-a="rule" data-id="${r.id}"></button></div>`).join("")}</div>
-    <div class="card"><div class="sec-h"><h3>${I("bell", 15)}Notificações</h3></div>
+  return `<div class="page-h"><div><h1>Configurações</h1><p>Contas conectadas, regras e notificações.</p></div></div>
+    <div class="card"><div class="sec-h"><h3>Contas conectadas</h3><span class="mu sm">${D.canais.length} contas</span></div>${D.canais.map(c => `<div class="rule">${chMini(c.id, 18)}<span style="flex:1"><b style="font-weight:600">${esc(c.nome)}</b> <span class="mu">· ${esc(c.conta)}</span></span><span class="mu sm num">${S.conv.filter(x => x.canal === c.id).length} conversas</span><span class="ok-t">Conectada</span></div>`).join("")}</div>
+    <div class="card"><div class="sec-h"><h3>Regras de organização</h3></div>${S.regras.map(r => `<div class="rule"><span style="flex:1">${esc(r.nome)}</span><button class="sw" role="switch" aria-checked="${r.ativa}" aria-label="${esc(r.nome)}" data-a="rule" data-id="${r.id}"></button></div>`).join("")}</div>
+    <div class="card"><div class="sec-h"><h3>Notificações</h3></div>
       ${[["alta", "Avisar só mensagens de prioridade alta"], ["resumo", "Resumo do dia às 8h"], ["equipe", "Avisar quando uma conversa for atribuída a mim"]].map(([k, t]) => `<div class="rule"><span style="flex:1">${t}</span><button class="sw" role="switch" aria-checked="${S.prefs[k]}" aria-label="${t}" data-a="pref" data-k="${k}"></button></div>`).join("")}</div>`;
 }
-
 /* busca */
 const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 const digits = s => String(s).replace(/[^\d]/g, "");
@@ -464,7 +473,7 @@ const MSUB = { contatos: "Contatos", relatorios: "Relatórios", config: "Configu
 function mtabs() {
   const k = kpis(); const cur = MSUB[ui.view] ? (ui.view === "prioridades" ? "inicio" : "mais") : ui.view === "painel" ? "inicio" : ui.view;
   $("#mtabs").innerHTML = MT.map(([v, l, i]) => `<button class="${cur === v ? "on" : ""}" data-a="go" data-v="${v}" aria-current="${cur === v ? "page" : "false"}">${I(i, 22)}<span>${l}</span>${v === "caixa" && k.naoLidas ? `<span class="badge">${k.naoLidas}</span>` : ""}</button>`).join("");
-  const t = { inicio: "Início", painel: "Início", caixa: "Caixa unificada", tarefas: "Tarefas", contas: "Contas a pagar", mais: "Mais" }[ui.view] || MSUB[ui.view] || "";
+  const t = { inicio: "Início", painel: "Início", caixa: "Caixa de entrada", tarefas: "Tarefas", contas: "Contas a pagar", mais: "Mais" }[ui.view] || MSUB[ui.view] || "";
   $("#mtitle").textContent = t;
   $("#mback").hidden = !MSUB[ui.view];
 }
@@ -483,34 +492,34 @@ function mobView() {
   }
 }
 function mRow(c) {
-  const lm = c.msgs[c.msgs.length - 1];
-  return `<button class="mrow pri${!c.lida ? " unread" : ""}${c._new ? " row-new" : ""}" style="--c:var(--${PRI[c.pri][0]})" data-a="open" data-id="${c.id}">${chIcon(c.canal)}
-    <span class="l1"><b>${esc(contato(c.contato).nome)}</b><time>${when(last(c))}</time></span>
-    <span class="l2">${esc(fill(c.acao) !== "Nenhuma ação necessária" ? fill(c.acao) : fill(lm.txt).replace(/\n+/g, " "))}</span>
-    <span class="l3">${c.prazo && !c.resolvida ? `<span class="pill ${prazoCls(c.prazo)}">${prazoTxt(c.prazo)}</span>` : ""}${c.valor ? valPill(c.valor) : ""}<span class="pill">${esc(c.cat)}</span></span></button>`;
+  const tags = rowTags(c);
+  return `<button class="mrow p-${c.pri}${!c.lida ? " unread" : ""}" data-a="open" data-id="${c.id}">
+    <span class="l1"><b>${esc(contato(c.contato).nome)}</b>${chMini(c.canal)}<time>${when(last(c))}</time></span>
+    <span class="l2">${esc(fill(c.acao) !== "Nenhuma ação necessária" ? fill(c.acao) : fill(c.assunto))}</span>
+    ${tags ? `<span class="l3">${tags}</span>` : ""}</button>`;
 }
 function mInicio() {
   const k = kpis(); const pri = S.conv.filter(c => c.pri === "alta" && !c.resolvida).sort(sortPrazo);
-  const hoje = openTasks().filter(t => t.prazo && t.prazo.d <= 0).sort(sortPrazo);
-  return `<div><div class="mhello"><span class="demo-tag" style="justify-self:start">${I("info", 12, 2.4)}Demonstração · dados fictícios</span><h2>${saudacao()}, Camila</h2><p class="mu">${hojeLongo()}</p></div>
-    <div class="msec"><div class="card resume" style="border-radius:16px"><h3>${I("spark", 15)}Resumo do dia</h3><p style="font-size:14px">${resumoTxt()}</p></div></div>
-    <div class="msec"><div class="mk"><button data-a="go" data-v="prioridades"><b class="red">${k.altas}</b><span>Prioridade alta</span></button><button data-a="go" data-v="tarefas"><b>${k.hoje + k.atrasadas}</b><span>Para hoje e atrasadas</span></button><button data-a="go" data-v="contas"><b class="num">${brlCurto(k.pagar)}</b><span>A pagar em 7 dias</span></button></div></div>
-    <div class="msec"><div class="msec-h"><h3>Prioridades</h3><button class="link" data-a="go" data-v="prioridades">Ver todas</button></div><div class="mcard">${pri.slice(0, 4).map(mRow).join("") || '<div class="empty">Nada urgente agora.</div>'}</div></div>
-    <div class="msec"><div class="msec-h"><h3>Para hoje</h3><button class="link" data-a="go" data-v="tarefas">Tarefas</button></div><div class="mcard">${hoje.length ? hoje.map(mTask).join("") : '<div class="empty">Nada para hoje.</div>'}</div></div>
+  const foco = openTasks().filter(t => t.prazo && t.prazo.d <= 0).sort(sortPrazo);
+  return `<div><div class="mhello"><h2>${saudacao()}, Camila</h2><p class="mu">${hojeLongo()}</p></div>
+    <div class="msec"><div class="mk"><button data-a="go" data-v="prioridades"><b class="red">${k.altas}</b><span>Prioridade alta</span></button><button data-a="go" data-v="tarefas"><b class="${k.atrasadas ? "red" : ""}">${k.hoje + k.atrasadas}</b><span>Para hoje</span></button><button data-a="go" data-v="contas"><b class="num">${brlCurto(k.pagar)}</b><span>A pagar em 7 dias</span></button></div></div>
+    <div class="msec"><div class="card resume"><h3>Resumo do dia</h3><p>${resumoTxt()}</p></div></div>
+    <div class="msec"><div class="msec-h"><h3>Foco de hoje</h3><span class="mu sm">${foco.length}</span></div><div class="mcard">${foco.length ? foco.map(mTask).join("") : '<div class="empty">Nada vence hoje.</div>'}</div></div>
+    <div class="msec"><div class="msec-h"><h3>Pedem sua atenção</h3><button class="link" data-a="go" data-v="prioridades">Ver todas</button></div><div class="mcard">${pri.slice(0, 4).map(mRow).join("") || '<div class="empty">Nada urgente agora.</div>'}</div></div>
     <div style="height:16px"></div></div>`;
 }
 function mCaixa(forPri) {
   const l = convList(forPri);
-  const filt = [["todas", "Todas"], ["naolidas", "Não lidas"], ["prioritarias", "Prioritárias"], ["aguardando", "Aguardando"], ["anexo", "Com anexo"], ["resolvidas", "Resolvidas"]];
-  const extra = ui.cat ? `<button class="chip on" data-a="clearf">${esc(ui.cat)} ${I("x", 12)}</button>` : ui.contato ? `<button class="chip on" data-a="clearf">${esc(contato(ui.contato).nome)} ${I("x", 12)}</button>` : "";
-  return `<div><div style="padding:12px 16px 8px;background:var(--sf);border-bottom:1px solid var(--bd);display:grid;gap:10px">${chSeg()}</div>
-    ${forPri ? (extra ? `<div class="mscroll" style="padding-top:10px">${extra}</div>` : "") : `<div class="mscroll" style="padding-top:10px">${extra}${filt.map(([k, t]) => `<button class="chip${ui.filtro === k ? " on" : ""}" data-a="filtro" data-f="${k}">${t}</button>`).join("")}</div>`}
-    <div class="mcard" style="margin:0 12px 16px">${l.length ? l.map(mRow).join("") : '<div class="empty">Nenhuma conversa neste filtro.</div>'}</div></div>`;
+  const tabs = [["todas", "Todas"], ["naolidas", "Não lidas"], ["aguardando", "Aguardando"], ["resolvidas", "Resolvidas"]];
+  const extra = ui.cat ? `<button class="fchip" data-a="clearf">${esc(ui.cat)} ${I("x", 12)}</button>` : ui.contato ? `<button class="fchip" data-a="clearf">${esc(contato(ui.contato).nome)} ${I("x", 12)}</button>` : "";
+  return `<div><div class="mbar">${forPri ? `<span class="mu sm">Da mais urgente para a menos urgente</span>` : `<div class="tabs">${tabs.map(([k, t]) => `<button class="${ui.filtro === k ? "on" : ""}" data-a="filtro" data-f="${k}">${t}</button>`).join("")}</div>`}${canalSel()}</div>
+    ${extra ? `<div style="padding:10px 16px 0">${extra}</div>` : ""}
+    <div class="mcard" style="margin:12px 12px 16px">${l.length ? l.map(mRow).join("") : '<div class="empty">Nenhuma conversa aqui.</div>'}</div></div>`;
 }
 function mTask(t) {
-  const o = t.origens.map(C).filter(Boolean);
-  return `<div class="mtask${t.feita ? " done" : ""}" data-tid="${t.id}"><button class="check${t.feita ? " on" : ""}" style="width:24px;height:24px" data-a="ttoggle" data-id="${t.id}" aria-label="${t.feita ? "Reabrir" : "Concluir"} tarefa">${t.feita ? I("check", 13, 3) : ""}</button>
-    <button class="tx" style="text-align:left" ${o[0] ? `data-a="open" data-id="${o[0].id}"` : ""}><b>${esc(t.titulo)}</b><small>${o[0] ? chIcon(o[0].canal, true) : ""}<span class="pill ${prazoCls(t.prazo)}">${prazoTxt(t.prazo)}</span>${t.valor ? valPill(t.valor) : ""}${avatar(t.resp, "xs")}</small></button></div>`;
+  const o = t.origens.map(C).filter(Boolean)[0];
+  return `<div class="mtask${t.feita ? " done" : ""}${t.pri === "alta" ? " hot" : ""}" data-tid="${t.id}"><button class="check${t.feita ? " on" : ""}" data-a="ttoggle" data-id="${t.id}" aria-label="${t.feita ? "Reabrir" : "Concluir"} tarefa">${t.feita ? I("check", 13, 3) : ""}</button>
+    <button class="tx" ${o ? `data-a="open" data-id="${o.id}"` : ""}><b>${esc(t.titulo)}</b><small>${o ? `${chMini(o.canal)}${esc(contato(o.contato).nome)} · ` : ""}<span class="${prazoCls(t.prazo)}">${prazoTxt(t.prazo)}</span>${t.valor ? ` · ${brl(t.valor.v)}` : ""}</small></button>${avatar(t.resp, "xs")}</div>`;
 }
 function mTarefas() {
   const l = tasksFiltered(); const op = l.filter(t => !t.feita); const done = l.filter(t => t.feita);
@@ -537,22 +546,17 @@ function openS2(id) {
 }
 function drawS2() {
   const c = C(ui.s2); const el = $("#s2"); if (!c || !el) return;
-  const ct = contato(c.contato); const ts = tasksOf(c); const tk = ts.find(t => !t.feita);
-  el.innerHTML = `<div class="s2top"><button class="icb" data-a="s2close" aria-label="Voltar">${I("back", 22)}</button>${cAvatar(c.contato, "sm")}<div class="tt"><b>${esc(ct.nome)}</b><small>${chIcon(c.canal, true)}${esc(canal(c.canal).nome)}</small></div></div>
+  const ct = contato(c.contato); const tk = tasksOf(c).find(t => !t.feita);
+  el.innerHTML = `<div class="s2top"><button class="icb" data-a="s2close" aria-label="Voltar">${I("back", 22)}</button>${cAvatar(c.contato, "sm")}<div class="tt"><b>${esc(ct.nome)}</b><small>${chMini(c.canal)}${esc(canal(c.canal).nome)}</small></div><button class="icb" data-a="resolve" data-id="${c.id}" aria-label="${c.resolvida ? "Reabrir" : "Resolver"}">${I(c.resolvida ? "reset" : "check", 20, 2.2)}</button></div>
     <div class="s2body">
-      <div class="s2info"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b style="font-size:13px;display:flex;gap:6px;align-items:center">${I("spark", 14)}Informações identificadas</b><span class="mu num" style="font-size:12px">${c.conf}% de confiança</span></div>
-        <p class="sum">${esc(fill(c.resumo))}</p>
-        <div class="tags">${priPill(c.pri)}<span class="pill">${esc(c.cat)}</span><span class="pill">${esc(c.tipo)}</span>${c.prazo ? `<span class="pill ${prazoCls(c.prazo)}">${prazoTxt(c.prazo, true)}</span>` : ""}${c.valor ? valPill(c.valor) : ""}</div>
-        <p style="font-size:13.5px"><span class="mu">Ação sugerida:</span> <b>${esc(fill(c.acao))}</b></p>
-        <p style="font-size:13px;display:flex;gap:6px;align-items:center"><span class="mu">Responsável:</span> ${c.resp ? avatar(c.resp, "xs") + esc(membro(c.resp).nome) : "ninguém"}</p>
-        <details class="why"><summary>Por que essa classificação?</summary><ul>${c.motivos.map(m => `<li>${esc(fill(m))}</li>`).join("")}</ul></details>
-        <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="chip" data-a="edit" data-id="${c.id}" data-f="pri">${I("edit", 12)}Prioridade</button><button class="chip" data-a="edit" data-id="${c.id}" data-f="cat">${I("edit", 12)}Categoria</button><button class="chip" data-a="edit" data-id="${c.id}" data-f="prazo">${I("edit", 12)}Prazo</button></div>
+      <div class="s2info"><p class="sum">${esc(fill(c.resumo))}</p>
+        ${fill(c.acao) !== "Nenhuma ação necessária" ? `<div class="next"><span>Próximo passo</span><b>${esc(fill(c.acao))}</b>${tk ? `<small class="${prazoCls(tk.prazo)}">${prazoTxt(tk.prazo, true)} · ${tk.resp ? esc(membro(tk.resp).nome.split(" ")[0]) : "sem responsável"}</small>` : ""}</div>` : ""}
+        <div class="s2facts"><button data-a="edit" data-id="${c.id}" data-f="pri"><span class="dot ${PRI[c.pri][0]}"></span>${PRI[c.pri][1]}</button><button data-a="edit" data-id="${c.id}" data-f="cat">${esc(c.cat)}</button>${c.prazo ? `<button data-a="edit" data-id="${c.id}" data-f="prazo" class="${prazoCls(c.prazo)}">${prazoTxt(c.prazo)}</button>` : ""}${c.valor ? `<span class="num">${brl(c.valor.v)}</span>` : ""}</div>
       </div>
-      <h2 style="font-size:16px;padding:0 4px">${esc(fill(c.assunto))}</h2>
+      <h2 class="s2subj">${esc(fill(c.assunto))}</h2>
       ${thread(c)}
-      ${ts.length ? `<div class="mcard">${ts.map(mTask).join("")}</div>` : ""}
     </div>
-    <div class="s2bar"><button data-a="reply" data-id="${c.id}">${I("reply", 20)}Responder</button>${tk ? `<button data-a="ttoggle" data-id="${tk.id}">${I("task", 20)}Concluir tarefa</button>` : `<button data-a="mktask" data-id="${c.id}">${I("plus", 20)}Criar tarefa</button>`}<button data-a="assign" data-id="${c.id}">${I("user", 20)}${c.resp ? esc(membro(c.resp).nome.split(" ")[0]) : "Atribuir"}</button><button class="${c.resolvida ? "on" : ""}" data-a="resolve" data-id="${c.id}">${I("check", 20)}${c.resolvida ? "Resolvida" : "Resolver"}</button></div>`;
+    <div class="s2bar"><button data-a="reply" data-id="${c.id}">${I("reply", 20)}Responder</button>${tk ? `<button data-a="ttoggle" data-id="${tk.id}">${I("check", 20, 2.4)}Concluir</button>` : `<button data-a="mktask" data-id="${c.id}">${I("plus", 20)}Tarefa</button>`}<button data-a="assign" data-id="${c.id}">${c.resp ? avatar(c.resp, "sm") : I("user", 20)}${c.resp ? esc(membro(c.resp).nome.split(" ")[0]) : "Atribuir"}</button></div>`;
 }
 function closeS2() {
   const el = $("#s2"); ui.s2 = null; if (!el) return;
@@ -706,7 +710,7 @@ document.addEventListener("click", e => {
   if (!el) return;
   const a = el.dataset.a, id = el.dataset.id;
   switch (a) {
-    case "go": if (el.dataset.v === "caixa" && mode === "desk") { ui.canal = "todos"; ui.filtro = "todas"; } go(el.dataset.v); break;
+    case "go": if (el.dataset.v === "caixa") { ui.canal = "todos"; ui.filtro = el.dataset.f || "todas"; } go(el.dataset.v); break;
     case "open": openConv(id); break;
     case "topen": openTask(id); break;
     case "close": ui.sel = null; render(true); break;
@@ -718,7 +722,7 @@ document.addEventListener("click", e => {
     case "tview": ui.tview = el.dataset.k; render(true); break;
     case "ttoggle": toggleTask(id); break;
     case "reply": replyModal(id); break;
-    case "usesug": { const sb = document.querySelector('#modal [data-a="send"]'); const cc = sb && C(sb.dataset.id); const ta = $("#rtxt"); if (ta && cc) { ta.value = fill(cc.sugestoes[+el.dataset.i]); ta.style.borderColor = ""; ta.focus(); } break; }
+    case "usesug": { const sb = document.querySelector('#modal [data-a="send"]') || document.querySelector('.compose [data-a="send"]'); const cc = sb && C(sb.dataset.id); const ta = $("#rtxt"); if (ta && cc) { ta.value = fill(cc.sugestoes[+el.dataset.i]); ta.style.borderColor = ""; ta.focus(); } break; }
     case "send": send(id); break;
     case "assign": assignModal(id); break;
     case "setresp": setResp(id, el.dataset.m); break;
@@ -737,8 +741,24 @@ document.addEventListener("click", e => {
     case "tryq": ui.q = el.dataset.q; { const q = $("#q"); if (q) q.value = ui.q; } if (ui.view !== "busca") ui.prev = ui.view; ui.view = "busca"; render(true); break;
   }
 });
+document.addEventListener("change", e => { if (e.target.dataset && e.target.dataset.a === "canalsel") { ui.canal = e.target.value; ui.cat = null; ui.contato = null; if (ui.view !== "caixa" && ui.view !== "prioridades") { ui.view = "caixa"; ui.filtro = "todas"; } render(true); } });
+/* arrastar tarefas entre prazos (computador) */
+const DROP = { hoje: 0, semana: 3, depois: 10, sem: null };
+let drag = null;
+document.addEventListener("dragstart", e => { const tk = e.target.closest && e.target.closest(".tk[draggable]"); if (!tk) return; drag = tk.dataset.tid; tk.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", drag); } catch (er) { } });
+document.addEventListener("dragend", () => { drag = null; document.querySelectorAll(".dragging,.over").forEach(x => x.classList.remove("dragging", "over")); });
+document.addEventListener("dragover", e => { const col = drag && e.target.closest && e.target.closest(".col[data-col]"); if (!col || !(col.dataset.col in DROP)) return; e.preventDefault(); document.querySelectorAll(".col.over").forEach(x => x !== col && x.classList.remove("over")); col.classList.add("over"); });
+document.addEventListener("drop", e => { const col = drag && e.target.closest && e.target.closest(".col[data-col]"); if (!col || !(col.dataset.col in DROP)) return; e.preventDefault(); moveTask(drag, col.dataset.col); drag = null; });
+function moveTask(id, k) {
+  const t = T(id); if (!t || bucket(t) === k) { render(true); return; }
+  const old = t.prazo ? clone(t.prazo) : null; const d = DROP[k];
+  t.prazo = d === null ? null : { d, h: d === 0 && old && old.d === 0 ? old.h : null };
+  t.origens.map(C).filter(Boolean).forEach(c => { if (!c.resolvida) c.prazo = t.prazo ? clone(t.prazo) : null; });
+  toast("Prazo alterado", `${t.titulo} · ${t.prazo ? prazoTxt(t.prazo) : "sem prazo"}`, { label: "Desfazer", fn: () => { t.prazo = old; t.origens.map(C).filter(Boolean).forEach(c => { c.prazo = old ? clone(old) : null; }); render(true); } });
+  render(true);
+}
 document.addEventListener("toggle", e => { if (e.target.classList && e.target.classList.contains("info-inline")) ui.infoInline = e.target.open; }, true);
-document.addEventListener("input", e => { if (e.target.id === "mq") { ui.q = e.target.value; const pos = e.target.selectionStart; render(true); const mi = $("#mq"); if (mi) { mi.focus(); try { mi.setSelectionRange(pos, pos); } catch (er) { } } } });
+document.addEventListener("input", e => { if (e.target.id === "rtxt" && e.target.closest(".compose")) { e.target.style.height = "auto"; e.target.style.height = Math.min(140, e.target.scrollHeight) + "px"; e.target.style.borderColor = ""; return; } if (e.target.id === "mq") { ui.q = e.target.value; const pos = e.target.selectionStart; render(true); const mi = $("#mq"); if (mi) { mi.focus(); try { mi.setSelectionRange(pos, pos); } catch (er) { } } } });
 
 /* atalhos de teclado (computador) */
 document.addEventListener("keydown", e => {
@@ -751,6 +771,7 @@ document.addEventListener("keydown", e => {
     if (ui.sel) { ui.sel = null; render(true); return; }
     return;
   }
+  if (e.target.id === "rtxt" && e.key === "Enter" && !e.shiftKey && e.target.closest(".compose")) { e.preventDefault(); const b = document.querySelector('.compose [data-a="send"]'); if (b) send(b.dataset.id); return; }
   if (mode !== "desk") return;
   if (e.key === "/" && !typing) { e.preventDefault(); const q = $("#q"); if (q) { q.focus(); q.select(); } return; }
   if (ui.view === "busca" && e.target.id === "q" && (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter")) {
